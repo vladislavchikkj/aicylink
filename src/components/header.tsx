@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { categories, companyLinks } from "@/content/site";
+import { usePathname } from "next/navigation";
+import { categories, companyLinks, nav } from "@/content/site";
 import { Logo } from "./logo";
 import { Container } from "./ui";
 
@@ -20,17 +23,18 @@ function ProductsPanel() {
             {c.name}
           </p>
           <p className="mt-2 text-sm text-muted">{c.tagline}</p>
-          <ul className="mt-4 space-y-2 text-sm">
+          <ul className="-mx-2 mt-4 space-y-1 text-sm">
             {c.products.length > 0 ? (
               c.products.map((p) => (
                 <li key={p.name}>
-                  <Link href={p.href ?? "#products"} className="font-medium hover:text-ice-1">
-                    {p.name}
+                  <Link href={p.href ?? "/#products"} className="block rounded-md p-2 transition-colors hover:bg-surface">
+                    <span className="font-semibold">{p.name}</span>
+                    <span className="mt-0.5 block text-xs text-muted">{p.description}</span>
                   </Link>
                 </li>
               ))
             ) : (
-              <li className="text-subtle">Coming soon</li>
+              <li className="px-2 text-subtle">Coming soon</li>
             )}
           </ul>
         </div>
@@ -71,37 +75,39 @@ function MegaMenu({ label, width, children }: { label: string; width: string; ch
 }
 
 export function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-white/90 backdrop-blur-md">
       <Container className="flex h-16 items-center justify-between gap-6">
-        <Link href="#top" aria-label="AicyLink home">
+        <Link href="/" aria-label="AicyLink home">
           <Logo />
         </Link>
 
         <nav className="hidden flex-1 items-center gap-7 lg:flex">
-          <MegaMenu label="Products" width="w-[720px]">
+          <MegaMenu label="Products" width="w-[760px]">
             <ProductsPanel />
           </MegaMenu>
           <MegaMenu label="Company" width="w-[520px]">
             <CompanyPanel />
           </MegaMenu>
-          <Link href="#partners" className="text-sm font-medium text-foreground/80 hover:text-foreground">
-            Partners
-          </Link>
-          <Link href="#careers" className="text-sm font-medium text-foreground/80 hover:text-foreground">
-            Careers
-          </Link>
+          {nav.map((item) => (
+            <Link key={item.href} href={item.href} className="text-sm font-medium text-foreground/80 hover:text-foreground">
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="flex items-center gap-3">
           <Link
-            href="#contact"
+            href="/contact"
             className="hidden rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-ink/80 sm:inline-flex"
           >
             Contact us
           </Link>
 
-          <details className="group/menu lg:hidden">
+          {/* Re-mounted on navigation so the menu closes after a link is followed */}
+          <details key={pathname} className="lg:hidden">
             <summary className="flex size-10 cursor-pointer list-none items-center justify-center rounded-lg border border-border [&::-webkit-details-marker]:hidden">
               <span className="sr-only">Menu</span>
               <svg viewBox="0 0 20 20" className="size-5" aria-hidden>
@@ -113,10 +119,10 @@ export function Header() {
               <ul className="mt-3 space-y-3">
                 {categories.map((c) => (
                   <li key={c.id}>
-                    <Link href="#products" className="font-semibold">
+                    <Link href="/#products" className="font-semibold">
                       {c.name}
                     </Link>
-                    <p className="text-sm text-muted">{c.tagline}</p>
+                    <p className="text-sm text-muted">{c.products.map((p) => p.name).join(" · ") || c.tagline}</p>
                   </li>
                 ))}
               </ul>
@@ -131,7 +137,7 @@ export function Header() {
                 ))}
               </ul>
               <Link
-                href="#contact"
+                href="/contact"
                 className="mt-8 flex h-11 items-center justify-center rounded-lg bg-ink text-sm font-semibold text-white"
               >
                 Contact us

@@ -43,11 +43,11 @@ export function Contact() {
               </Reveal>
               <Reveal delay={0.5}>
                 <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-                  <Button href={`mailto:${site.email}`} variant="inverted">
-                    {site.email}
+                  <Button href="/contact" variant="inverted">
+                    Get in touch →
                   </Button>
-                  <Button href={site.linkedin} variant="ghost">
-                    LinkedIn →
+                  <Button href={`mailto:${site.email}`} variant="ghost">
+                    {site.email}
                   </Button>
                 </div>
               </Reveal>

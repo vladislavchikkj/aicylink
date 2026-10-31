@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Reveal } from "./motion/reveal";
+import { Reveal, WordsReveal } from "./motion/reveal";
 
 export function Container({ children, className }: { children: React.ReactNode; className?: string }) {
   return <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${className ?? ""}`}>{children}</div>;
@@ -11,9 +11,19 @@ export function Eyebrow({ children, className }: { children: React.ReactNode; cl
   );
 }
 
-export function SectionHeading({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
+export function SectionHeading({
+  eyebrow,
+  title,
+  text,
+  center,
+}: {
+  eyebrow: string;
+  title: string;
+  text?: string;
+  center?: boolean;
+}) {
   return (
-    <div className="max-w-2xl">
+    <div className={`max-w-2xl ${center ? "mx-auto text-center" : ""}`}>
       <Reveal from="left" duration={0.8}>
         <Eyebrow>{eyebrow}</Eyebrow>
       </Reveal>
@@ -26,6 +36,29 @@ export function SectionHeading({ eyebrow, title, text }: { eyebrow: string; titl
         </Reveal>
       )}
     </div>
+  );
+}
+
+/** Top section of inner pages: grid backdrop, icy glow and an animated title. */
+export function PageHero({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
+  return (
+    <section className="relative overflow-hidden border-b border-border">
+      <div className="page-grid absolute inset-0" aria-hidden />
+      <div className="ice-glow absolute -top-40 left-1/2 size-[560px] -translate-x-1/2 rounded-full opacity-70" aria-hidden />
+      <Container className="relative py-20 sm:py-28">
+        <Reveal from="left" duration={0.8}>
+          <Eyebrow>{eyebrow}</Eyebrow>
+        </Reveal>
+        <h1 className="mt-4 max-w-4xl text-5xl font-bold tracking-tighter sm:text-6xl">
+          <WordsReveal text={title} delay={0.1} />
+        </h1>
+        {text && (
+          <Reveal delay={0.4}>
+            <p className="mt-6 max-w-2xl text-lg text-muted text-pretty">{text}</p>
+          </Reveal>
+        )}
+      </Container>
+    </section>
   );
 }
 
@@ -52,5 +85,31 @@ export function Button({
     >
       {children}
     </Link>
+  );
+}
+
+export function initials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
+}
+
+const avatarGradients = [
+  "linear-gradient(135deg, var(--ice-1), var(--ice-3))",
+  "linear-gradient(135deg, var(--ice-2), var(--ice-1))",
+  "linear-gradient(135deg, var(--ice-3), var(--ice-2))",
+];
+
+export function Avatar({ name, index, size = "size-11" }: { name: string; index: number; size?: string }) {
+  return (
+    <span
+      className={`${size} flex shrink-0 items-center justify-center rounded-full text-sm font-bold text-white`}
+      style={{ background: avatarGradients[index % avatarGradients.length] }}
+      aria-hidden
+    >
+      {initials(name)}
+    </span>
   );
 }

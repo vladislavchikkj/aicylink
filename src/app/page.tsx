@@ -1,25 +1,23 @@
 import { Careers } from "@/components/careers";
+import { Clients } from "@/components/clients";
 import { Company } from "@/components/company";
 import { Contact } from "@/components/contact";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
-import { Partners } from "@/components/partners";
+import { Metrics } from "@/components/metrics";
 import { Products } from "@/components/products";
+import { Testimonials } from "@/components/testimonials";
 
 export default function Home() {
   return (
     <>
-      <Header />
-      <main>
-        <Hero />
-        <Products />
-        <Company />
-        <Partners />
-        <Careers />
-        <Contact />
-      </main>
-      <Footer />
+      <Hero />
+      <Clients />
+      <Products />
+      <Metrics />
+      <Company />
+      <Testimonials />
+      <Careers />
+      <Contact />
     </>
   );
 }

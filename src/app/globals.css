@@ -74,3 +74,61 @@ body {
     animation: none;
   }
 }
+
+/* Cursor-following highlight for cards (see <Spotlight>) */
+.spotlight {
+  position: relative;
+  isolation: isolate;
+}
+
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--ice-1) 12%, transparent),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.spotlight:hover::before {
+  opacity: 1;
+}
+
+/* Infinite logo strip */
+.marquee {
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.marquee-track {
+  animation: marquee 40s linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.page-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, #000 30%, transparent 75%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
