@@ -4,6 +4,9 @@
 // ⚠️ DEMO CONTENT: everything marked `DEMO` is placeholder data so the site
 // looks complete. Replace it with real data, then set `demo: false` —
 // while `demo` is true the site asks search engines not to index it.
+// Any DEMO array can simply be emptied: its section hides itself.
+
+const email = "hello@aicylink.com"; // TODO: a mailbox you actually read
 
 export const site = {
   demo: true,
@@ -11,10 +14,14 @@ export const site = {
   legalName: "AicyLink Ltd.", // DEMO
   founded: 2024, // DEMO
   location: "Remote-first · Europe", // DEMO
-  url: "https://aicylink.com", // TODO: confirm production domain
-  email: "hello@aicylink.com", // TODO: confirm contact email
-  pressEmail: "press@aicylink.com", // TODO
-  careersEmail: "careers@aicylink.com", // TODO
+  // Canonical address used in SEO tags, sitemap and social previews.
+  // Change it here (or via NEXT_PUBLIC_SITE_URL in Vercel) when the domain is bought.
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://aicylink.vercel.app",
+  // Google Search Console → "HTML tag" verification code (content="…" value).
+  googleVerification: "",
+  email,
+  pressEmail: email,
+  careersEmail: email,
   linkedin: "https://www.linkedin.com/company/aicylink",
   eyebrow: "AicyLink platform",
   title: "Web services for the",
@@ -72,11 +79,6 @@ export const categories: Category[] = [
   },
 ];
 
-export const nav = [
-  { label: "Partners", href: "/#partners" },
-  { label: "Careers", href: "/careers" },
-];
-
 export const companyLinks = [
   { label: "About AicyLink", text: "Our mission, story and team", href: "/about" },
   { label: "Careers", text: "Open roles and how we work", href: "/careers" },
@@ -129,7 +131,12 @@ export const audiences = [
 ];
 
 // DEMO clients — fictional brands rendered as wordmarks
-export const clients = ["Northbeam", "Lumora", "Arcfield", "Quantive", "Hollow Pine", "Brightwave", "Corvex", "Meridia"];
+export const clients: string[] = ["Northbeam", "Lumora", "Arcfield", "Quantive", "Hollow Pine", "Brightwave", "Corvex", "Meridia"];
+
+export const nav = [
+  ...(clients.length ? [{ label: "Partners", href: "/#partners" }] : []),
+  { label: "Careers", href: "/careers" },
+];
 
 // DEMO testimonials
 export const testimonials = [

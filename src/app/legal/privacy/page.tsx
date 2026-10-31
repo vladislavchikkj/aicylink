@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal-page";
 import { site } from "@/content/site";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/legal/privacy" } };
 
 // DEMO: template text — have it reviewed by a lawyer before launch.
 export default function PrivacyPage() {

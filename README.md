@@ -20,12 +20,14 @@ Legal pages in `src/app/legal/` contain template text and should be reviewed by 
 
 ## Contact form
 
-The form on `/contact` posts to `/api/contact`, which forwards messages to Telegram.
-Set these environment variables (locally in `.env.local`, in production in Vercel settings):
+There is no backend: the form on `/contact` opens the visitor's email app with a
+pre-filled message to `site.email`.
 
-```
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_ID=...
-```
+## SEO and domain
 
-Without them the form shows an error with a fallback email link.
+The canonical address is `site.url` (default `https://aicylink.vercel.app`).
+When a custom domain is connected, set `NEXT_PUBLIC_SITE_URL` in Vercel (or edit
+`site.url`) and redeploy — sitemap, canonical links and social previews follow.
+
+To verify the site in Google Search Console, choose the "HTML tag" method and paste
+the `content` value into `site.googleVerification`.

@@ -8,6 +8,7 @@ import { hiringSteps, perks, roles, site } from "@/content/site";
 export const metadata: Metadata = {
   title: "Careers",
   description: `Join ${site.name} and build web services used around the world.`,
+  alternates: { canonical: "/careers" },
 };
 
 export default function CareersPage() {
@@ -38,7 +39,7 @@ export default function CareersPage() {
       <section id="roles" className="scroll-mt-16 border-y border-border bg-surface py-20 sm:py-28">
         <Container className="grid gap-12 lg:grid-cols-[1fr_1.6fr]">
           <SectionHeading
-            eyebrow={`Open roles · ${roles.length}`}
+            eyebrow={roles.length ? `Open roles · ${roles.length}` : "Open roles"}
             title="Find your next role."
             text="Don't see a perfect match? We still want to hear from you."
           />

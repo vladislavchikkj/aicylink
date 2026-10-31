@@ -7,12 +7,20 @@ import { contactTopics, site, type ContactTopic } from "@/content/site";
 export const metadata: Metadata = {
   title: "Contact",
   description: `Get in touch with ${site.name} — investors, partners, customers and press.`,
+  alternates: { canonical: "/contact" },
 };
 
+const mailboxes = [
+  { label: "Email", value: site.email },
+  { label: "Press", value: site.pressEmail },
+  { label: "Careers", value: site.careersEmail },
+];
+
+// Separate press/careers mailboxes only show up once they differ from the main one.
 const channels = [
-  { label: "General", value: site.email, href: `mailto:${site.email}` },
-  { label: "Press", value: site.pressEmail, href: `mailto:${site.pressEmail}` },
-  { label: "Careers", value: site.careersEmail, href: `mailto:${site.careersEmail}` },
+  ...mailboxes
+    .filter((m, i) => mailboxes.findIndex((o) => o.value === m.value) === i)
+    .map((m) => ({ ...m, href: `mailto:${m.value}` })),
   { label: "LinkedIn", value: "AicyLink", href: site.linkedin },
 ];
 

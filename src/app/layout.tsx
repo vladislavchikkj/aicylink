@@ -35,6 +35,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: defaultTitle, description: site.description },
   // Keep demo content out of search results until real data is in place.
   robots: site.demo ? { index: false, follow: false } : { index: true, follow: true },
+  ...(site.googleVerification && { verification: { google: site.googleVerification } }),
 };
 
 const organizationJsonLd = {

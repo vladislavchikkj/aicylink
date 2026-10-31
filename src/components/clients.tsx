@@ -24,6 +24,7 @@ function Wordmark({ name, index }: { name: string; index: number }) {
 }
 
 export function Clients() {
+  if (!clients.length) return null;
   return (
     <section id="partners" className="scroll-mt-16 border-b border-border py-14">
       <Container>

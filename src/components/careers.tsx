@@ -1,10 +1,25 @@
 import Link from "next/link";
-import { roles } from "@/content/site";
+import { roles, site } from "@/content/site";
 import { Reveal } from "./motion/reveal";
 import { Button, Container, SectionHeading } from "./ui";
 
 export function RoleList({ limit }: { limit?: number }) {
   const shown = limit ? roles.slice(0, limit) : roles;
+
+  if (!shown.length) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border bg-white p-8">
+        <p className="font-semibold">No open roles right now.</p>
+        <p className="mt-2 text-sm text-muted">
+          We&apos;re always happy to meet great people — send us a note at{" "}
+          <a href={`mailto:${site.careersEmail}`} className="font-semibold text-foreground hover:text-ice-1">
+            {site.careersEmail}
+          </a>
+          .
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-white">

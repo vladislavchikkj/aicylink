@@ -8,6 +8,7 @@ import { brandColors, news, site } from "@/content/site";
 export const metadata: Metadata = {
   title: "Press & brand",
   description: `News, logos and brand assets from ${site.name}.`,
+  alternates: { canonical: "/press" },
 };
 
 const dateFormat = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -26,24 +27,26 @@ export default function PressPage() {
         text={`The latest from ${site.name}, plus everything you need to write about us. For press inquiries contact ${site.pressEmail}.`}
       />
 
-      <section className="py-20 sm:py-28">
-        <Container>
-          <SectionHeading eyebrow="Newsroom" title="Latest announcements." />
-          <Stagger className="mt-12 border-t border-border" stagger={0.1}>
-            {news.map((n) => (
-              <StaggerItem key={n.title} from="left">
-                <div className="group grid gap-2 border-b border-border py-8 sm:grid-cols-[200px_1fr_auto] sm:items-center sm:gap-8">
-                  <time dateTime={n.date} className="font-mono text-sm text-subtle">
-                    {dateFormat.format(new Date(n.date))}
-                  </time>
-                  <h3 className="text-xl font-bold tracking-tight transition-colors group-hover:text-ice-1">{n.title}</h3>
-                  <span className="font-mono text-xs uppercase tracking-widest text-subtle">{n.source}</span>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </Container>
-      </section>
+      {news.length > 0 && (
+        <section className="py-20 sm:py-28">
+          <Container>
+            <SectionHeading eyebrow="Newsroom" title="Latest announcements." />
+            <Stagger className="mt-12 border-t border-border" stagger={0.1}>
+              {news.map((n) => (
+                <StaggerItem key={n.title} from="left">
+                  <div className="group grid gap-2 border-b border-border py-8 sm:grid-cols-[200px_1fr_auto] sm:items-center sm:gap-8">
+                    <time dateTime={n.date} className="font-mono text-sm text-subtle">
+                      {dateFormat.format(new Date(n.date))}
+                    </time>
+                    <h3 className="text-xl font-bold tracking-tight transition-colors group-hover:text-ice-1">{n.title}</h3>
+                    <span className="font-mono text-xs uppercase tracking-widest text-subtle">{n.source}</span>
+                  </div>
+                </StaggerItem>
+              ))}
+            </Stagger>
+          </Container>
+        </section>
+      )}
 
       <section className="border-t border-border bg-surface py-20 sm:py-28">
         <Container>

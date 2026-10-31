@@ -4,6 +4,7 @@ import { Stagger, StaggerItem } from "./motion/reveal";
 import { Container } from "./ui";
 
 export function Metrics() {
+  if (!metrics.length) return null;
   return (
     <section className="relative overflow-hidden bg-ink py-20 text-white sm:py-24">
       <div

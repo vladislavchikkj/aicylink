@@ -8,6 +8,7 @@ import { site, team, timeline, values } from "@/content/site";
 export const metadata: Metadata = {
   title: "About",
   description: `${site.name} is a product company building a portfolio of fast, intelligent web services.`,
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
@@ -34,22 +35,24 @@ export default function AboutPage() {
         </Container>
       </section>
 
-      <section className="border-y border-border bg-surface py-20 sm:py-28">
-        <Container>
-          <SectionHeading eyebrow="Our story" title="From a small team to a growing portfolio." />
-          <Stagger className="relative mt-14 grid gap-10 lg:grid-cols-3" stagger={0.18}>
-            <div className="absolute left-0 right-0 top-[7px] hidden h-px bg-border lg:block" aria-hidden />
-            {timeline.map((t) => (
-              <StaggerItem key={t.year} from="left" className="relative">
-                <span className="relative block size-[15px] rounded-full border-4 border-surface bg-ice-1 shadow-[0_0_0_1px_var(--ice-1)]" />
-                <p className="mt-6 font-mono text-sm font-semibold text-ice-1">{t.year}</p>
-                <h3 className="mt-2 text-xl font-bold tracking-tight">{t.title}</h3>
-                <p className="mt-2 text-muted">{t.text}</p>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </Container>
-      </section>
+      {timeline.length > 0 && (
+        <section className="border-y border-border bg-surface py-20 sm:py-28">
+          <Container>
+            <SectionHeading eyebrow="Our story" title="From a small team to a growing portfolio." />
+            <Stagger className="relative mt-14 grid gap-10 lg:grid-cols-3" stagger={0.18}>
+              <div className="absolute left-0 right-0 top-[7px] hidden h-px bg-border lg:block" aria-hidden />
+              {timeline.map((t) => (
+                <StaggerItem key={t.year} from="left" className="relative">
+                  <span className="relative block size-[15px] rounded-full border-4 border-surface bg-ice-1 shadow-[0_0_0_1px_var(--ice-1)]" />
+                  <p className="mt-6 font-mono text-sm font-semibold text-ice-1">{t.year}</p>
+                  <h3 className="mt-2 text-xl font-bold tracking-tight">{t.title}</h3>
+                  <p className="mt-2 text-muted">{t.text}</p>
+                </StaggerItem>
+              ))}
+            </Stagger>
+          </Container>
+        </section>
+      )}
 
       <section className="py-20 sm:py-28">
         <Container>
@@ -68,28 +71,30 @@ export default function AboutPage() {
         </Container>
       </section>
 
-      <section className="border-t border-border bg-surface py-20 sm:py-28">
-        <Container>
-          <SectionHeading
-            eyebrow="Leadership"
-            title="The people behind AicyLink."
-            text="A senior team of engineers, designers and operators who have shipped products used by millions."
-          />
-          <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
-            {team.map((m, i) => (
-              <StaggerItem key={m.name} from="scale">
-                <Spotlight className="flex items-center gap-4 rounded-2xl border border-border bg-white p-6">
-                  <Avatar name={m.name} index={i} size="size-14" />
-                  <span>
-                    <span className="block font-semibold">{m.name}</span>
-                    <span className="block text-sm text-muted">{m.role}</span>
-                  </span>
-                </Spotlight>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </Container>
-      </section>
+      {team.length > 0 && (
+        <section className="border-t border-border bg-surface py-20 sm:py-28">
+          <Container>
+            <SectionHeading
+              eyebrow="Leadership"
+              title="The people behind AicyLink."
+              text="A senior team of engineers, designers and operators who have shipped products used by millions."
+            />
+            <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
+              {team.map((m, i) => (
+                <StaggerItem key={m.name} from="scale">
+                  <Spotlight className="flex items-center gap-4 rounded-2xl border border-border bg-white p-6">
+                    <Avatar name={m.name} index={i} size="size-14" />
+                    <span>
+                      <span className="block font-semibold">{m.name}</span>
+                      <span className="block text-sm text-muted">{m.role}</span>
+                    </span>
+                  </Spotlight>
+                </StaggerItem>
+              ))}
+            </Stagger>
+          </Container>
+        </section>
+      )}
 
       <div className="pt-20 sm:pt-28">
         <Contact />

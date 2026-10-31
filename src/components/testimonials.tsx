@@ -6,6 +6,7 @@ import { Avatar, Container, SectionHeading } from "./ui";
 const directions: From[] = ["left", "up", "right"];
 
 export function Testimonials() {
+  if (!testimonials.length) return null;
   return (
     <section className="border-t border-border bg-surface py-20 sm:py-28">
       <Container>
