@@ -12,8 +12,8 @@ export function Company() {
       <Container>
         <SectionHeading
           eyebrow="Company"
-          title="Built for everyone who builds the web."
-          text="AicyLink is a home for ambitious web services: one team, one platform and one standard of quality across everything we ship."
+          title="One studio. Many ways to work together."
+          text="AicyLink is a home for simple, useful AI apps: one team, one playbook and one standard of quality across everything we ship."
         />
 
         <Stagger className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-3" stagger={0.14}>

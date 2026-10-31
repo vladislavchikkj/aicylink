@@ -4,140 +4,163 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { EASE_OUT, Reveal } from "./motion/reveal";
 
-// DEMO product screens rendered in HTML so they stay crisp at any size.
+// Product screens rendered in HTML so they stay crisp at any size.
+// `preview` marks concepts of apps that are still in development.
 const screens = [
-  {
-    id: "pulse",
-    name: "Aicy Pulse",
-    url: "pulse.aicylink.com/overview",
-    color: "var(--ice-1)",
-    kpis: [
-      { label: "Active users", value: "184,209", delta: "+12.4%" },
-      { label: "Conversion", value: "6.8%", delta: "+0.9%" },
-      { label: "Revenue", value: "$412K", delta: "+18.1%" },
-    ],
-    series: [30, 42, 38, 55, 48, 62, 58, 74, 69, 83, 79, 95],
-    list: ["Onboarding v3", "Paywall test B", "Push campaign", "Referral flow"],
-  },
-  {
-    id: "edge",
-    name: "Aicy Edge",
-    url: "edge.aicylink.com/regions",
-    color: "var(--ice-2)",
-    kpis: [
-      { label: "Requests / day", value: "1.2B", delta: "+8.2%" },
-      { label: "p95 latency", value: "38 ms", delta: "−11%" },
-      { label: "Uptime", value: "99.99%", delta: "30d" },
-    ],
-    series: [60, 58, 63, 61, 66, 64, 70, 68, 72, 71, 76, 78],
-    list: ["Frankfurt", "Singapore", "São Paulo", "Virginia"],
-  },
-  {
-    id: "flow",
-    name: "Aicy Flow",
-    url: "flow.aicylink.com/funnels",
-    color: "var(--ice-3)",
-    kpis: [
-      { label: "Funnel starts", value: "92,410", delta: "+21%" },
-      { label: "Completion", value: "64.2%", delta: "+5.3%" },
-      { label: "Trials", value: "11,820", delta: "+14%" },
-    ],
-    series: [90, 82, 76, 71, 66, 60, 57, 53, 50, 48, 46, 44],
-    list: ["Welcome", "Goals quiz", "Social proof", "Paywall"],
-  },
-];
+  { id: "lummie", name: "Lummie", url: "lummie.app", color: "var(--ice-1)", preview: false },
+  { id: "snap", name: "Aicy Snap", url: "Aicy Snap · concept preview", color: "var(--ice-2)", preview: true },
+  { id: "stars", name: "Aicy Stars", url: "Aicy Stars · concept preview", color: "var(--ice-3)", preview: true },
+] as const;
 
-function chartPath(series: number[], w = 600, h = 180) {
-  const step = w / (series.length - 1);
-  const points = series.map((v, i) => [i * step, h - (v / 100) * h] as const);
-  const line = points.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
-  return { line, area: `${line} L${w} ${h} L0 ${h} Z` };
+type ScreenId = (typeof screens)[number]["id"];
+
+const rise = (delay: number) => ({
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, delay, ease: EASE_OUT },
+});
+
+function LummieScreen() {
+  return (
+    <div className="mx-auto flex min-h-[340px] max-w-2xl flex-col justify-center gap-3 p-4 sm:p-8">
+      <motion.p {...rise(0.1)} className="ml-auto max-w-[80%] rounded-2xl rounded-br-md bg-ink px-4 py-2.5 text-sm text-white">
+        Help me plan a cozy weekend in Lisbon
+      </motion.p>
+      <motion.div {...rise(0.5)} className="max-w-[85%] rounded-2xl rounded-bl-md border border-border bg-surface px-4 py-3 text-sm">
+        <p className="font-semibold">Here&apos;s a relaxed plan ✨</p>
+        <ul className="mt-2 space-y-1 text-muted">
+          <li>Sat — Alfama walk, pastéis at sunset in Graça</li>
+          <li>Sun — LX Factory brunch, tram 28 back to the centre</li>
+        </ul>
+      </motion.div>
+      <motion.div {...rise(0.9)} className="mt-4 flex items-center gap-3 rounded-full border border-border bg-white px-4 py-2.5">
+        <span className="flex-1 text-sm text-subtle">Ask anything or start talking…</span>
+        <span className="flex h-6 items-center gap-0.5" aria-hidden>
+          {[0.5, 0.9, 0.6, 1, 0.7, 0.4, 0.8].map((h, i) => (
+            <motion.span
+              key={i}
+              className="w-1 rounded-full bg-ice-1"
+              animate={{ height: [`${h * 40}%`, `${h * 100}%`, `${h * 40}%`] }}
+              transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
+            />
+          ))}
+        </span>
+      </motion.div>
+    </div>
+  );
 }
 
-function Screen({ screen }: { screen: (typeof screens)[number] }) {
-  const { line, area } = chartPath(screen.series);
-  const gradientId = `fill-${screen.id}`;
+const macros = [
+  { label: "Protein", value: "24 g", share: 0.62, color: "var(--ice-1)" },
+  { label: "Carbs", value: "38 g", share: 0.48, color: "var(--ice-2)" },
+  { label: "Fat", value: "21 g", share: 0.35, color: "var(--ice-3)" },
+];
 
+function SnapScreen() {
   return (
-    <motion.div
-      key={screen.id}
-      initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -16, filter: "blur(6px)" }}
-      transition={{ duration: 0.5, ease: EASE_OUT }}
-      className="grid gap-4 p-4 sm:grid-cols-[160px_1fr] sm:p-6"
-    >
-      <aside className="hidden flex-col gap-1 text-sm sm:flex">
-        <span className="mb-3 flex items-center gap-2 font-semibold">
-          <span className="size-2.5 rounded-full" style={{ background: screen.color }} />
-          {screen.name}
+    <div className="grid min-h-[340px] items-center gap-4 p-4 sm:grid-cols-[1fr_1.2fr] sm:p-8">
+      <motion.div
+        {...rise(0.1)}
+        className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-[radial-gradient(circle_at_40%_40%,#fde68a,#f59e0b_45%,#78350f)]"
+      >
+        <span className="text-6xl" aria-hidden>
+          🥑
         </span>
-        {["Overview", "Reports", "Audiences", "Settings"].map((item, i) => (
-          <span key={item} className={`rounded-md px-2 py-1.5 ${i === 0 ? "bg-surface font-medium" : "text-muted"}`}>
-            {item}
-          </span>
-        ))}
-      </aside>
-
-      <div className="min-w-0">
-        <div className="grid grid-cols-3 gap-3">
-          {screen.kpis.map((k) => (
-            <div key={k.label} className="rounded-xl border border-border p-3">
-              <p className="truncate text-[11px] text-subtle">{k.label}</p>
-              <p className="mt-1 text-base font-bold tracking-tight sm:text-xl">{k.value}</p>
-              <p className="text-[11px] font-medium text-emerald-600">{k.delta}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-3 rounded-xl border border-border p-3">
-          <svg viewBox="0 0 600 180" className="h-36 w-full sm:h-44" preserveAspectRatio="none" aria-hidden>
-            <defs>
-              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor={screen.color} stopOpacity="0.25" />
-                <stop offset="100%" stopColor={screen.color} stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {[45, 90, 135].map((y) => (
-              <line key={y} x1="0" x2="600" y1={y} y2={y} stroke="var(--border)" strokeDasharray="4 6" />
-            ))}
-            <motion.path
-              d={area}
-              fill={`url(#${gradientId})`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.4 }}
-            />
-            <motion.path
-              d={line}
-              fill="none"
-              stroke={screen.color}
-              strokeWidth="2.5"
-              vectorEffect="non-scaling-stroke"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1.4, ease: EASE_OUT }}
-            />
-          </svg>
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {screen.list.map((item, i) => (
-            <div key={item} className="rounded-lg bg-surface px-3 py-2">
-              <p className="truncate text-xs font-medium">{item}</p>
-              <div className="mt-2 h-1 overflow-hidden rounded-full bg-border">
+        <motion.span
+          className="absolute inset-x-6 h-0.5 bg-white/90 shadow-[0_0_12px_white]"
+          initial={{ top: "10%" }}
+          animate={{ top: ["10%", "90%", "10%"] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden
+        />
+      </motion.div>
+      <div>
+        <motion.p {...rise(0.3)} className="text-xs text-subtle">
+          Detected
+        </motion.p>
+        <motion.p {...rise(0.35)} className="text-xl font-bold tracking-tight">
+          Avocado toast with eggs
+        </motion.p>
+        <motion.p {...rise(0.45)} className="mt-1 text-3xl font-bold tracking-tight text-ice-2">
+          ~ 450 kcal
+        </motion.p>
+        <div className="mt-5 space-y-3">
+          {macros.map((m, i) => (
+            <div key={m.label}>
+              <div className="flex justify-between text-xs">
+                <span className="font-medium">{m.label}</span>
+                <span className="text-muted">{m.value}</span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface">
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: screen.color }}
+                  style={{ background: m.color }}
                   initial={{ width: 0 }}
-                  animate={{ width: `${90 - i * 17}%` }}
-                  transition={{ duration: 1, delay: 0.3 + i * 0.1, ease: EASE_OUT }}
+                  animate={{ width: `${m.share * 100}%` }}
+                  transition={{ duration: 1, delay: 0.6 + i * 0.12, ease: EASE_OUT }}
                 />
               </div>
             </div>
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+const cards = [
+  { name: "The Star", symbol: "✦" },
+  { name: "The Sun", symbol: "☀" },
+  { name: "The Moon", symbol: "☾" },
+];
+
+function StarsScreen() {
+  return (
+    <div className="grid min-h-[340px] items-center gap-6 bg-[#0b0820] p-4 text-white sm:grid-cols-[1.1fr_1fr] sm:p-8">
+      <div>
+        <motion.p {...rise(0.1)} className="font-mono text-xs uppercase tracking-widest text-white/50">
+          Today · Leo ♌
+        </motion.p>
+        <motion.p {...rise(0.2)} className="mt-3 text-xl font-bold tracking-tight">
+          A bold idea finds its moment.
+        </motion.p>
+        <motion.p {...rise(0.3)} className="mt-2 text-sm text-white/65">
+          Your energy is high and people are listening — a good day to start something you&apos;ve been putting off.
+        </motion.p>
+        <motion.div {...rise(0.4)} className="mt-5 flex gap-2 text-xs">
+          {["Love 82%", "Career 91%", "Mood 76%"].map((t) => (
+            <span key={t} className="rounded-full border border-white/15 px-2.5 py-1 text-white/80">
+              {t}
+            </span>
+          ))}
+        </motion.div>
+      </div>
+      <div className="flex items-center justify-center gap-3" style={{ perspective: 800 }}>
+        {cards.map((c, i) => (
+          <motion.div
+            key={c.name}
+            className="flex aspect-[2/3] w-20 flex-col items-center justify-between rounded-lg border border-white/20 bg-gradient-to-b from-[#2a1f5c] to-[#120d2e] p-2 sm:w-24"
+            initial={{ rotateY: 180, opacity: 0 }}
+            animate={{ rotateY: 0, opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.3 + i * 0.2, ease: EASE_OUT }}
+          >
+            <span className="text-[9px] uppercase tracking-widest text-white/50">{i + 1}</span>
+            <span className="text-3xl text-[#c4b5fd]">{c.symbol}</span>
+            <span className="text-[10px] font-semibold">{c.name}</span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const views: Record<ScreenId, () => React.JSX.Element> = { lummie: LummieScreen, snap: SnapScreen, stars: StarsScreen };
+
+function Screen({ id }: { id: ScreenId }) {
+  const View = views[id];
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+      <View />
     </motion.div>
   );
 }
@@ -162,7 +185,10 @@ export function ProductShowcase() {
             {i === active && (
               <motion.span layoutId="showcase-tab" className="absolute inset-0 rounded-full bg-ink" transition={{ duration: 0.4, ease: EASE_OUT }} />
             )}
-            <span className="relative">{s.name}</span>
+            <span className="relative">
+              {s.name}
+              {s.preview && <span className="ml-1.5 font-mono text-[10px] uppercase opacity-60">soon</span>}
+            </span>
           </button>
         ))}
       </div>
@@ -185,7 +211,7 @@ export function ProductShowcase() {
             <span className="w-[54px]" aria-hidden />
           </div>
           <AnimatePresence mode="wait">
-            <Screen key={screen.id} screen={screen} />
+            <Screen key={screen.id} id={screen.id} />
           </AnimatePresence>
         </div>
       </div>

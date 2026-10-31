@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/press" },
 };
 
-const dateFormat = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", day: "numeric" });
+const dateFormat = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long" });
 
 const logos = [
   { label: "Logo — dark", file: "/logo-dark.svg", dark: false },

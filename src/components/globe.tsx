@@ -161,7 +161,7 @@ export function Globe() {
               <span className="relative size-2.5 rounded-full" style={{ background: c.color }} />
             </span>
             <span className="text-sm font-semibold">{c.name}</span>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-subtle">soon</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-subtle">{c.products.length} apps</span>
           </motion.div>
         </motion.div>
       ))}

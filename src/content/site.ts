@@ -1,19 +1,19 @@
 // All editable site content lives here. Add products, partners and roles
 // to the arrays below — sections, pages and menus update automatically.
 //
-// ⚠️ DEMO CONTENT: everything marked `DEMO` is placeholder data so the site
-// looks complete. Replace it with real data, then set `demo: false` —
-// while `demo` is true the site asks search engines not to index it.
-// Any DEMO array can simply be emptied: its section hides itself.
+// Keep everything here true: the site is indexed by search engines and read by
+// investors. Lists like clients, testimonials or metrics can stay empty — their
+// sections hide themselves until there is real data to show.
+// `demo: true` hides the whole site from search engines.
 
-const email = "hello@aicylink.com"; // TODO: a mailbox you actually read
+const email = "aicylink@gmail.com";
 
 export const site = {
-  demo: true,
+  demo: false,
   name: "AicyLink",
-  legalName: "AicyLink Ltd.", // DEMO
-  founded: 2024, // DEMO
-  location: "Remote-first · Europe", // DEMO
+  legalName: "AicyLink", // no legal entity yet — update once registered
+  founded: 2025,
+  location: "Remote-first",
   // Canonical address used in SEO tags, sitemap and social previews.
   // Change it here (or via NEXT_PUBLIC_SITE_URL in Vercel) when the domain is bought.
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://aicylink.vercel.app",
@@ -27,7 +27,7 @@ export const site = {
   title: "Web services for the",
   titleAccent: "connected world.",
   description:
-    "AicyLink builds and runs a family of fast, intelligent web services — so businesses can launch, grow and scale on a single trusted platform.",
+    "AicyLink is a product studio building simple, AI-powered apps that people use every day — for creating, feeling better and discovering more about themselves.",
 };
 
 export type Product = {
@@ -45,36 +45,37 @@ export type Category = {
   products: Product[];
 };
 
-// DEMO products
 export const categories: Category[] = [
   {
-    id: "build",
-    name: "Build",
-    tagline: "Tools that help teams create and ship web products faster.",
+    id: "create",
+    name: "Create",
+    tagline: "AI tools that turn ideas into something real.",
     color: "var(--ice-1)",
     products: [
-      { name: "Aicy Forge", description: "Spin up production-ready web apps in minutes.", status: "beta" },
-      { name: "Aicy Pages", description: "Lightning-fast sites with a visual editor.", status: "soon" },
+      { name: "Lummie", description: "An AI companion to chat, talk and create with.", status: "live", href: "https://lummie.app" },
+      { name: "Aicy CV", description: "Tailor your resume to any job post in seconds.", status: "soon" },
     ],
   },
   {
-    id: "grow",
-    name: "Grow",
-    tagline: "Business services that turn visitors into loyal customers.",
+    id: "thrive",
+    name: "Thrive",
+    tagline: "Personal apps for health, fitness and confidence.",
     color: "var(--ice-2)",
     products: [
-      { name: "Aicy Pulse", description: "Real-time product analytics with AI insights.", status: "live" },
-      { name: "Aicy Flow", description: "Onboarding and paywall funnels that convert.", status: "beta" },
+      { name: "Aicy Snap", description: "Snap your meal — get calories and macros instantly.", status: "soon" },
+      { name: "Aicy Glow", description: "A personal AI glow-up plan for skin, style and hair.", status: "soon" },
+      { name: "Aicy Move", description: "Wall pilates and somatic workouts made for you.", status: "soon" },
     ],
   },
   {
-    id: "scale",
-    name: "Scale",
-    tagline: "Infrastructure and AI that keep everything fast and reliable.",
+    id: "explore",
+    name: "Explore",
+    tagline: "Learning and self-discovery, a few minutes a day.",
     color: "var(--ice-3)",
     products: [
-      { name: "Aicy Edge", description: "Global edge hosting with zero-config scaling.", status: "live" },
-      { name: "Aicy Mind", description: "Plug-and-play AI agents for your product.", status: "soon" },
+      { name: "Aicy Learn", description: "Five-minute daily lessons on AI, money and focus.", status: "soon" },
+      { name: "Aicy Stars", description: "AI astrology, birth charts and tarot readings.", status: "soon" },
+      { name: "Aicy Dreams", description: "A dream journal with AI interpretations.", status: "soon" },
     ],
   },
 ];
@@ -98,89 +99,57 @@ export const principles = [
   { label: "Global by default", text: "Made for customers everywhere." },
 ];
 
-// DEMO metrics
-export const metrics = [
-  { value: 2.4, suffix: "M+", decimals: 1, label: "Monthly active users" },
-  { value: 40, suffix: "+", decimals: 0, label: "Countries served" },
-  { value: 99.99, suffix: "%", decimals: 2, label: "Platform uptime" },
-  { value: 6, suffix: "", decimals: 0, label: "Products in the portfolio" },
-];
+export const metrics: { value: number; suffix: string; decimals: number; label: string }[] = [];
 
 export const audiences = [
   {
     tag: "For investors",
-    title: "Back a growing portfolio of products.",
-    text: "One company, many products, one shared platform. Let's talk about building it together.",
+    title: "Back a growing portfolio of apps.",
+    text: "One studio, many products, one shared playbook for building and growing them. Let's talk.",
     cta: { label: "Investor relations", href: "/contact?topic=investors" },
     color: "var(--ice-1)",
   },
   {
-    tag: "For businesses",
-    title: "Services built for your growth.",
-    text: "Use our products or partner with us to bring a new web service to your customers.",
+    tag: "For partners",
+    title: "Grow together with our apps.",
+    text: "Advertising, distribution and co-development — let's find a way to work together.",
     cta: { label: "Talk to our team", href: "/contact?topic=partnership" },
     color: "var(--ice-2)",
   },
   {
     tag: "For talent",
     title: "Build what's next with us.",
-    text: "Work on products from zero to launch, with real ownership and modern tools.",
+    text: "Take products from zero to launch, with real ownership and a modern AI stack.",
     cta: { label: "See careers", href: "/careers" },
     color: "var(--ice-3)",
   },
 ];
 
-// DEMO clients — fictional brands rendered as wordmarks
-export const clients: string[] = ["Northbeam", "Lumora", "Arcfield", "Quantive", "Hollow Pine", "Brightwave", "Corvex", "Meridia"];
+// Real clients and partners only — the section hides while the list is empty.
+export const clients: string[] = [];
 
 export const nav = [
   ...(clients.length ? [{ label: "Partners", href: "/#partners" }] : []),
   { label: "Careers", href: "/careers" },
 ];
 
-// DEMO testimonials
-export const testimonials = [
-  {
-    quote:
-      "AicyLink shipped in weeks what our team had planned for two quarters. The quality bar is genuinely world-class.",
-    name: "Elena Marsh",
-    role: "VP Product, Lumora",
-  },
-  {
-    quote: "Aicy Pulse became the first dashboard our leadership opens every morning. It just tells us what matters.",
-    name: "David Okafor",
-    role: "COO, Arcfield",
-  },
-  {
-    quote: "Reliable, fast and thoughtful. Working with the AicyLink team feels like having a senior product studio in-house.",
-    name: "Sofia Lindqvist",
-    role: "Founder, Brightwave",
-  },
-];
+// Real customer quotes only (with their permission).
+export const testimonials: { quote: string; name: string; role: string }[] = [];
 
-// DEMO company story
 export const timeline = [
-  { year: "2024", title: "AicyLink is founded", text: "A small team of engineers sets out to build a portfolio of web services." },
-  { year: "2025", title: "First products launch", text: "Aicy Pulse and Aicy Edge go live with early customers in Europe." },
-  { year: "2026", title: "Going global", text: "Six products, customers in 40+ countries and a growing remote team." },
+  { year: "2025", title: "AicyLink is founded", text: "A product studio set up to build a portfolio of simple, AI-powered apps." },
+  { year: "Jan 2026", title: "Lummie goes live", text: "Our first product launches: an AI companion for chatting and creating." },
+  { year: "Next", title: "Building the portfolio", text: "Seven new apps in development across creativity, wellbeing and self-discovery." },
 ];
 
 export const values = [
-  { title: "Craft over volume", text: "We'd rather ship one excellent product than five average ones." },
+  { title: "Simple wins", text: "Every app does one thing — and does it really well." },
   { title: "Own the outcome", text: "Every person owns their work from the first idea to the last metric." },
   { title: "Move with clarity", text: "Small teams, written thinking, fast decisions." },
   { title: "Earn trust daily", text: "Reliability, security and honesty are part of the product." },
 ];
 
-// DEMO team
-export const team = [
-  { name: "Alex Rowan", role: "Co-founder & CEO" },
-  { name: "Mira Volkova", role: "Co-founder & CTO" },
-  { name: "Jonas Becker", role: "Head of Product" },
-  { name: "Lea Fontaine", role: "Head of Design" },
-  { name: "Marcus Hale", role: "Head of Engineering" },
-  { name: "Nadia Petrova", role: "Head of Growth" },
-];
+export const team = [{ name: "Vladislav Kosevich", role: "Founder" }];
 
 export type Partner = { name: string; logo: string; href?: string };
 
@@ -188,21 +157,14 @@ export const partners: Partner[] = [];
 
 export type Role = { title: string; team: string; location: string; type: string; href: string };
 
-// DEMO roles
-export const roles: Role[] = [
-  { title: "Senior Frontend Engineer", team: "Engineering", location: "Remote · Europe", type: "Full-time", href: "/contact?topic=careers" },
-  { title: "Backend Engineer (Node.js)", team: "Engineering", location: "Remote · Europe", type: "Full-time", href: "/contact?topic=careers" },
-  { title: "Product Designer", team: "Design", location: "Remote", type: "Full-time", href: "/contact?topic=careers" },
-  { title: "Growth Marketing Manager", team: "Growth", location: "Remote", type: "Full-time", href: "/contact?topic=careers" },
-];
+// Add real openings here; while empty, the careers pages invite open applications.
+export const roles: Role[] = [];
 
 export const perks = [
-  { title: "Remote-first", text: "Work from anywhere in Europe-friendly time zones." },
-  { title: "Real ownership", text: "Own products end to end, with equity for early team members." },
-  { title: "Top-tier tools", text: "Latest hardware, AI tools and any software you need." },
-  { title: "Learning budget", text: "Annual budget for courses, books and conferences." },
-  { title: "Team offsites", text: "We meet in person a few times a year somewhere beautiful." },
-  { title: "Flexible time off", text: "Rest when you need it — we care about results, not hours." },
+  { title: "Remote-first", text: "Work from wherever you do your best work." },
+  { title: "Real ownership", text: "Own a product end to end — from idea to growth." },
+  { title: "Ship fast", text: "Small team, short loops: ideas reach real users in weeks." },
+  { title: "AI-native stack", text: "Build with the latest models, tools and frameworks." },
 ];
 
 export const hiringSteps = [
@@ -212,11 +174,8 @@ export const hiringSteps = [
   { step: "04", title: "Offer", text: "A clear offer within a few days." },
 ];
 
-// DEMO press
 export const news = [
-  { date: "2026-09-12", source: "Company news", title: "AicyLink expands its portfolio to six web services" },
-  { date: "2026-05-03", source: "Company news", title: "Aicy Edge reaches 99.99% uptime across 40+ countries" },
-  { date: "2025-11-20", source: "Company news", title: "AicyLink launches Aicy Pulse, AI-powered product analytics" },
+  { date: "2026-01", source: "Product launch", title: "AicyLink launches Lummie, its first AI product" },
 ];
 
 export const brandColors = [

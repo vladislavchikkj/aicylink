@@ -7,7 +7,7 @@ import { site, team, timeline, values } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `${site.name} is a product company building a portfolio of fast, intelligent web services.`,
+  description: `${site.name} is a product studio building simple, AI-powered apps people use every day.`,
   alternates: { canonical: "/about" },
 };
 
@@ -16,8 +16,8 @@ export default function AboutPage() {
     <>
       <PageHero
         eyebrow="About AicyLink"
-        title="We build the services the web runs on next."
-        text={`Founded in ${site.founded}, AicyLink is a product company with one mission: make powerful web services simple, fast and available to every business.`}
+        title="Simple AI apps for everyday life."
+        text={`Founded in ${site.founded}, AicyLink is a product studio with one mission: turn the power of AI into simple apps that make everyday life better.`}
       />
 
       <section className="py-20 sm:py-28">
@@ -27,9 +27,9 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={0.1}>
             <p className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              Great software shouldn&apos;t require a giant team. We build the products, run the infrastructure and
-              bake in the intelligence — so our customers can{" "}
-              <span className="text-ice-gradient">focus on what makes them unique.</span>
+              Great products don&apos;t need a giant team. We pick one everyday problem, solve it with AI and ship it fast
+              — so people get{" "}
+              <span className="text-ice-gradient">tools that simply work.</span>
             </p>
           </Reveal>
         </Container>
@@ -38,7 +38,7 @@ export default function AboutPage() {
       {timeline.length > 0 && (
         <section className="border-y border-border bg-surface py-20 sm:py-28">
           <Container>
-            <SectionHeading eyebrow="Our story" title="From a small team to a growing portfolio." />
+            <SectionHeading eyebrow="Our story" title="From one product to a portfolio." />
             <Stagger className="relative mt-14 grid gap-10 lg:grid-cols-3" stagger={0.18}>
               <div className="absolute left-0 right-0 top-[7px] hidden h-px bg-border lg:block" aria-hidden />
               {timeline.map((t) => (
@@ -77,7 +77,7 @@ export default function AboutPage() {
             <SectionHeading
               eyebrow="Leadership"
               title="The people behind AicyLink."
-              text="A senior team of engineers, designers and operators who have shipped products used by millions."
+              text="A small, hands-on team that designs, builds and grows every product itself."
             />
             <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
               {team.map((m, i) => (

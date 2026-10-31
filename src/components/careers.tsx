@@ -54,7 +54,7 @@ export function Careers() {
             text="We're a small, senior team. Everyone ships, everyone owns their work, and every product starts from a blank page."
           />
           <Reveal delay={0.25} className="mt-8">
-            <Button href="/careers">View all open roles</Button>
+            <Button href="/careers">Careers at AicyLink</Button>
           </Reveal>
         </div>
         <Reveal from="right" delay={0.15}>

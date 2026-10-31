@@ -7,7 +7,7 @@ import { hiringSteps, perks, roles, site } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Careers",
-  description: `Join ${site.name} and build web services used around the world.`,
+  description: `Join ${site.name} and build simple AI apps people use every day.`,
   alternates: { canonical: "/careers" },
 };
 
@@ -17,13 +17,13 @@ export default function CareersPage() {
       <PageHero
         eyebrow="Careers"
         title="Do the best work of your career."
-        text="Small senior teams, real ownership and products that ship. We're hiring people who care about craft as much as we do."
+        text="A small team, real ownership and products that ship. We're always open to meeting people who care about craft as much as we do."
       />
 
       <section className="py-20 sm:py-28">
         <Container>
           <SectionHeading eyebrow="Why AicyLink" title="Built around great people." />
-          <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
+          <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4" stagger={0.08}>
             {perks.map((p) => (
               <StaggerItem key={p.title}>
                 <Spotlight className="h-full rounded-2xl border border-border p-8">
@@ -45,12 +45,14 @@ export default function CareersPage() {
           />
           <Reveal from="right" delay={0.1}>
             <RoleList />
-            <p className="mt-6 text-sm text-muted">
-              Open application:{" "}
-              <a href={`mailto:${site.careersEmail}`} className="font-semibold text-foreground hover:text-ice-1">
-                {site.careersEmail}
-              </a>
-            </p>
+            {roles.length > 0 && (
+              <p className="mt-6 text-sm text-muted">
+                Open application:{" "}
+                <a href={`mailto:${site.careersEmail}`} className="font-semibold text-foreground hover:text-ice-1">
+                  {site.careersEmail}
+                </a>
+              </p>
+            )}
           </Reveal>
         </Container>
       </section>

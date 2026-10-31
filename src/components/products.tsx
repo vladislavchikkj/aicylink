@@ -42,8 +42,8 @@ export function Products() {
       <Container>
         <SectionHeading
           eyebrow="Products"
-          title="One platform. A growing family of products."
-          text="We design, build and run our own web services. Each one solves a real problem — and they all work better together."
+          title="A growing family of AI apps."
+          text="We design, build and run every app ourselves. Each one solves one everyday problem — simply and beautifully."
         />
 
         <Stagger className="mt-12 grid gap-6 lg:grid-cols-3" style={{ perspective: 1200 }} stagger={0.15}>
