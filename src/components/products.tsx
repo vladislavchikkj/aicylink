@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { categories, type Product } from "@/content/site";
+import { AppIcon } from "./app-icon";
 import { Stagger, StaggerItem } from "./motion/reveal";
 import { Spotlight } from "./motion/spotlight";
 import { ProductShowcase } from "./showcase";
@@ -17,9 +18,10 @@ function ProductRow({ product }: { product: Product }) {
     <li>
       <Link
         href={product.href ?? "/contact?topic=product"}
-        className="group/row flex items-start justify-between gap-4 rounded-lg p-3 transition-colors hover:bg-surface"
+        className="group/row flex items-start gap-3.5 rounded-lg p-3 transition-colors hover:bg-surface"
       >
-        <span>
+        <AppIcon id={product.id} className="size-11 transition-transform duration-300 group-hover/row:-rotate-6 group-hover/row:scale-105" />
+        <span className="min-w-0 flex-1">
           <span className="font-semibold">
             {product.name}
             <span className="ml-1 inline-block opacity-0 transition-all group-hover/row:translate-x-1 group-hover/row:opacity-100">

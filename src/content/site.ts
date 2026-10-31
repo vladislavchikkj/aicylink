@@ -31,11 +31,15 @@ export const site = {
 };
 
 export type Product = {
+  /** Matches an icon in components/app-icon.tsx */
+  id: AppId;
   name: string;
   description: string;
   status: "live" | "beta" | "soon";
   href?: string;
 };
+
+export type AppId = "lummie" | "cv" | "snap" | "glow" | "move" | "learn" | "stars" | "dreams";
 
 export type Category = {
   id: string;
@@ -52,8 +56,8 @@ export const categories: Category[] = [
     tagline: "AI tools that turn ideas into something real.",
     color: "var(--ice-1)",
     products: [
-      { name: "Lummie", description: "An AI companion to chat, talk and create with.", status: "live", href: "https://lummie.app" },
-      { name: "Aicy CV", description: "Tailor your resume to any job post in seconds.", status: "soon" },
+      { id: "lummie", name: "Lummie", description: "An AI companion to chat, talk and create with.", status: "live", href: "https://lummie.app" },
+      { id: "cv", name: "Aicy CV", description: "Tailor your resume to any job post in seconds.", status: "soon" },
     ],
   },
   {
@@ -62,9 +66,9 @@ export const categories: Category[] = [
     tagline: "Personal apps for health, fitness and confidence.",
     color: "var(--ice-2)",
     products: [
-      { name: "Aicy Snap", description: "Snap your meal — get calories and macros instantly.", status: "soon" },
-      { name: "Aicy Glow", description: "A personal AI glow-up plan for skin, style and hair.", status: "soon" },
-      { name: "Aicy Move", description: "Wall pilates and somatic workouts made for you.", status: "soon" },
+      { id: "snap", name: "Aicy Snap", description: "Snap your meal — get calories and macros instantly.", status: "soon" },
+      { id: "glow", name: "Aicy Glow", description: "A personal AI glow-up plan for skin, style and hair.", status: "soon" },
+      { id: "move", name: "Aicy Move", description: "Wall pilates and somatic workouts made for you.", status: "soon" },
     ],
   },
   {
@@ -73,9 +77,9 @@ export const categories: Category[] = [
     tagline: "Learning and self-discovery, a few minutes a day.",
     color: "var(--ice-3)",
     products: [
-      { name: "Aicy Learn", description: "Five-minute daily lessons on AI, money and focus.", status: "soon" },
-      { name: "Aicy Stars", description: "AI astrology, birth charts and tarot readings.", status: "soon" },
-      { name: "Aicy Dreams", description: "A dream journal with AI interpretations.", status: "soon" },
+      { id: "learn", name: "Aicy Learn", description: "Five-minute daily lessons on AI, money and focus.", status: "soon" },
+      { id: "stars", name: "Aicy Stars", description: "AI astrology, birth charts and tarot readings.", status: "soon" },
+      { id: "dreams", name: "Aicy Dreams", description: "A dream journal with AI interpretations.", status: "soon" },
     ],
   },
 ];

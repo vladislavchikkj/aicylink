@@ -3,7 +3,8 @@
 import createGlobe, { type Arc, type Marker } from "cobe";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
-import { categories } from "@/content/site";
+import type { AppId } from "@/content/site";
+import { AppIcon } from "./app-icon";
 import { EASE_OUT } from "./motion/reveal";
 
 type RGB = [number, number, number];
@@ -42,7 +43,14 @@ const arcs: Arc[] = [
   { from: hubs.berlin, to: hubs.dubai, color: ICE_3 },
 ];
 
-const chipPositions = ["left-0 top-[18%]", "right-0 top-[42%]", "left-[8%] bottom-[12%]"];
+// App icons floating around the globe.
+const orbit: { id: AppId; className: string; size: string }[] = [
+  { id: "lummie", className: "left-[14%] top-[2%]", size: "size-16" },
+  { id: "stars", className: "right-[10%] top-[10%]", size: "size-12" },
+  { id: "snap", className: "right-[2%] bottom-[22%]", size: "size-14" },
+  { id: "learn", className: "left-[34%] bottom-0", size: "size-11" },
+  { id: "glow", className: "left-[-2%] top-[46%]", size: "size-12" },
+];
 
 export function Globe() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -143,25 +151,19 @@ export function Globe() {
         aria-label="Interactive globe showing the AicyLink network"
       />
 
-      {categories.map((c, i) => (
+      {orbit.map((o, i) => (
         <motion.div
-          key={c.id}
-          className={`absolute ${chipPositions[i]} hidden sm:block`}
-          initial={{ opacity: 0, scale: 0.8, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.9 + i * 0.18, ease: EASE_OUT }}
+          key={o.id}
+          className={`absolute ${o.className} hidden sm:block`}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9, delay: 1.3 + i * 0.12, ease: EASE_OUT }}
         >
           <motion.div
-            className="flex items-center gap-2.5 rounded-xl border border-border bg-white/95 px-3.5 py-2.5 shadow-[0_12px_32px_-12px_rgba(10,10,10,0.25)]"
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 5 + i, repeat: Infinity, ease: "easeInOut" }}
+            animate={{ y: [0, -8, 0], rotate: [i % 2 ? -4 : 4, i % 2 ? 4 : -4, i % 2 ? -4 : 4] }}
+            transition={{ duration: 6 + i, repeat: Infinity, ease: "easeInOut" }}
           >
-            <span className="relative flex size-2.5">
-              <span className="absolute inset-0 animate-ping rounded-full opacity-60" style={{ background: c.color }} />
-              <span className="relative size-2.5 rounded-full" style={{ background: c.color }} />
-            </span>
-            <span className="text-sm font-semibold">{c.name}</span>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-subtle">{c.products.length} apps</span>
+            <AppIcon id={o.id} className={`${o.size} shadow-[0_18px_40px_-14px_rgba(10,10,10,0.45)]`} />
           </motion.div>
         </motion.div>
       ))}

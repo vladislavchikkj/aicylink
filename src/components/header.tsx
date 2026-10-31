@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { categories, companyLinks, nav } from "@/content/site";
+import { AppIcon } from "./app-icon";
 import { Logo } from "./logo";
 import { Container } from "./ui";
 
@@ -27,9 +28,13 @@ function ProductsPanel() {
             {c.products.length > 0 ? (
               c.products.map((p) => (
                 <li key={p.name}>
-                  <Link href={p.href ?? "/#products"} className="block rounded-md p-2 transition-colors hover:bg-surface">
-                    <span className="font-semibold">{p.name}</span>
-                    <span className="mt-0.5 block text-xs text-muted">{p.description}</span>
+                  <Link href={p.href ?? "/#products"} className="flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-surface">
+                    <AppIcon id={p.id} className="size-9" />
+                    <span>
+                      <span className="font-semibold">{p.name}</span>
+                      {p.status === "soon" && <span className="ml-1.5 font-mono text-[10px] uppercase text-subtle">soon</span>}
+                      <span className="mt-0.5 block text-xs text-muted">{p.description}</span>
+                    </span>
                   </Link>
                 </li>
               ))
@@ -58,14 +63,25 @@ function CompanyPanel() {
   );
 }
 
-function MegaMenu({ label, width, children }: { label: string; width: string; children: React.ReactNode }) {
+// "start" lines the panel up with the page container instead of centering it on the button.
+function MegaMenu({
+  label,
+  width,
+  align = "center",
+  children,
+}: {
+  label: string;
+  width: string;
+  align?: "center" | "start";
+  children: React.ReactNode;
+}) {
   return (
     <div className="group relative">
       <button className="flex h-16 items-center gap-1 text-sm font-medium text-foreground/80 transition-colors group-hover:text-foreground">
         {label}
         <Chevron />
       </button>
-      <div className="invisible absolute left-1/2 top-full -translate-x-1/2 pt-1 opacity-0 transition-all duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+      <div className={`invisible absolute top-full pt-1 opacity-0 ${align === "start" ? "-left-[116px]" : "left-1/2 -translate-x-1/2"} transition-all duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100`}>
         <div className={`${width} rounded-xl border border-border bg-white p-6 shadow-[0_24px_60px_-20px_rgba(10,10,10,0.25)]`}>
           {children}
         </div>
@@ -85,7 +101,7 @@ export function Header() {
         </Link>
 
         <nav className="hidden flex-1 items-center gap-7 lg:flex">
-          <MegaMenu label="Products" width="w-[760px]">
+          <MegaMenu label="Products" width="w-[880px]" align="start">
             <ProductsPanel />
           </MegaMenu>
           <MegaMenu label="Company" width="w-[520px]">
