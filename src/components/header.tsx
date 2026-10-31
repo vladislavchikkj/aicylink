@@ -78,7 +78,7 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-white/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border bg-white/95">
       <Container className="flex h-16 items-center justify-between gap-6">
         <Link href="/" aria-label="AicyLink home">
           <Logo />

@@ -57,20 +57,21 @@ export function Globe() {
     if (!canvas) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let width = canvas.offsetWidth;
     let phi = 4.2;
     let frame = 0;
     let visible = true;
 
     const globe = createGlobe(canvas, {
-      devicePixelRatio: 2,
-      width: width * 2,
-      height: width * 2,
+      devicePixelRatio: dpr,
+      width: width * dpr,
+      height: width * dpr,
       phi,
       theta: 0.28,
       dark: 0,
       diffuse: 2.4,
-      mapSamples: 20000,
+      mapSamples: 16000,
       mapBrightness: 1.4,
       mapBaseBrightness: 0.04,
       baseColor: [0.94, 0.97, 1],
@@ -89,7 +90,7 @@ export function Globe() {
       const d = drag.current;
       if (d.startX === null && !reduceMotion) phi += 0.0025;
       d.offset += (d.target - d.offset) * 0.08;
-      globe.update({ phi: phi + d.offset, width: width * 2, height: width * 2 });
+      globe.update({ phi: phi + d.offset, width: width * dpr, height: width * dpr });
       if (visible) frame = requestAnimationFrame(render);
     };
 
@@ -151,7 +152,7 @@ export function Globe() {
           transition={{ duration: 0.9, delay: 0.9 + i * 0.18, ease: EASE_OUT }}
         >
           <motion.div
-            className="flex items-center gap-2.5 rounded-xl border border-border bg-white/80 px-3.5 py-2.5 shadow-[0_12px_32px_-12px_rgba(10,10,10,0.25)] backdrop-blur-md"
+            className="flex items-center gap-2.5 rounded-xl border border-border bg-white/95 px-3.5 py-2.5 shadow-[0_12px_32px_-12px_rgba(10,10,10,0.25)]"
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 5 + i, repeat: Infinity, ease: "easeInOut" }}
           >

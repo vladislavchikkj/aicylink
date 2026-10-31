@@ -52,13 +52,14 @@ export function Hero() {
             </FadeIn>
           </motion.div>
 
-          <motion.div
-            style={{ y: globeY, scale: globeScale }}
-            initial={{ opacity: 0, scale: 0.85, rotate: -8 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 1.6, delay: 0.2, ease: EASE_OUT }}
-          >
-            <Globe />
+          <motion.div style={{ y: globeY, scale: globeScale }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, rotate: -8 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ duration: 1.6, delay: 0.2, ease: EASE_OUT }}
+            >
+              <Globe />
+            </motion.div>
           </motion.div>
         </Container>
       </div>

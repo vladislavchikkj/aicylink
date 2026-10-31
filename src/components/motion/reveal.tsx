@@ -15,10 +15,11 @@ const hidden: Record<From, TargetAndTransition> = {
   tilt: { y: 80, rotateX: -28, scale: 0.96 },
 };
 
-const shown: TargetAndTransition = { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, filter: "blur(0px)" };
+// Only opacity and transforms: they run on the compositor, so reveals never cost a repaint mid-scroll.
+const shown: TargetAndTransition = { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0 };
 
 function hiddenState(from: From): TargetAndTransition {
-  return { opacity: 0, filter: "blur(10px)", ...hidden[from] };
+  return { opacity: 0, ...hidden[from] };
 }
 
 type RevealProps = {
