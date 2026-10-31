@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --muted: #525252;
+  --subtle: #8a8a8a;
+  --border: #e5e5e5;
+  --surface: #f6f7f9;
+  --ink: #0a0a0a;
+  --ice-1: #0ea5e9;
+  --ice-2: #06b6d4;
+  --ice-3: #7c5cff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ice-1: var(--ice-1);
+  --color-ice-2: var(--ice-2);
+  --color-ice-3: var(--ice-3);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ice-1) 25%, transparent);
+}
+
+.text-ice-gradient {
+  background: linear-gradient(90deg, var(--ice-1), var(--ice-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Soft icy glow behind the hero illustration */
+.ice-glow {
+  background:
+    radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--ice-2) 30%, transparent), transparent 55%),
+    radial-gradient(circle at 25% 80%, color-mix(in srgb, var(--ice-3) 22%, transparent), transparent 55%);
+}
+
+.sparkle-glow {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ice-1) 80%, transparent));
+  animation: twinkle 4s ease-in-out infinite;
+  transform-origin: 861px 519px;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.88);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sparkle-glow {
+    animation: none;
+  }
+}
