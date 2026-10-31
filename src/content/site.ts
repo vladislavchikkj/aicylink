@@ -18,7 +18,7 @@ export const site = {
   // Change it here (or via NEXT_PUBLIC_SITE_URL in Vercel) when the domain is bought.
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://aicylink.vercel.app",
   // Google Search Console → "HTML tag" verification code (content="…" value).
-  googleVerification: "",
+  googleVerification: "51LKYNL0VFbaDpj0jciRmgSLJRSCDnKKVKQTlq1gsXQ",
   email,
   pressEmail: email,
   careersEmail: email,
