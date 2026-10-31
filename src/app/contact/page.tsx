@@ -3,12 +3,13 @@ import { ContactForm } from "@/components/contact-form";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { Container, Eyebrow, PageHero } from "@/components/ui";
 import { contactTopics, site, type ContactTopic } from "@/content/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Contact",
   description: `Get in touch with ${site.name} — investors, partners, customers and press.`,
-  alternates: { canonical: "/contact" },
-};
+  path: "/contact",
+});
 
 const mailboxes = [
   { label: "Email", value: site.email },

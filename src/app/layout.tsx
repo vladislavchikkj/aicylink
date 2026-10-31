@@ -4,7 +4,7 @@ import { CookieBanner } from "@/components/cookie-banner";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { MotionProviders } from "@/components/motion/providers";
-import { site } from "@/content/site";
+import { categories, site } from "@/content/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +17,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const defaultTitle = `${site.name} — ${site.title} ${site.titleAccent}`;
+// Search titles lead with what people search for; the hero headline stays more poetic.
+const defaultTitle = `${site.name} — AI apps for everyday life`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -44,10 +45,14 @@ const organizationJsonLd = {
   name: site.name,
   legalName: site.legalName,
   url: site.url,
-  logo: `${site.url}/logo-dark.svg`,
+  logo: `${site.url}/apple-icon`,
   email: site.email,
   foundingDate: String(site.founded),
   sameAs: [site.linkedin],
+  owns: categories
+    .flatMap((c) => c.products)
+    .filter((p) => p.href)
+    .map((p) => ({ "@type": "SoftwareApplication", name: p.name, url: p.href, applicationCategory: "UtilitiesApplication", operatingSystem: "Web" })),
 };
 
 export default function RootLayout({

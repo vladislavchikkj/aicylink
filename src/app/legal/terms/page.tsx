@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal-page";
 import { site } from "@/content/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Terms of Service", alternates: { canonical: "/legal/terms" } };
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Service",
+  description: `The terms that govern your use of the ${site.name} website.`,
+  path: "/legal/terms",
+});
 
 // DEMO: template text — have it reviewed by a lawyer before launch.
 export default function TermsPage() {

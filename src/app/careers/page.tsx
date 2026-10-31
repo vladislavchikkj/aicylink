@@ -4,12 +4,13 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { Spotlight } from "@/components/motion/spotlight";
 import { Button, Container, PageHero, SectionHeading } from "@/components/ui";
 import { hiringSteps, perks, roles, site } from "@/content/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Careers",
   description: `Join ${site.name} and build simple AI apps people use every day.`,
-  alternates: { canonical: "/careers" },
-};
+  path: "/careers",
+});
 
 export default function CareersPage() {
   return (

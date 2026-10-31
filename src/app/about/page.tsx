@@ -4,12 +4,13 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { Spotlight } from "@/components/motion/spotlight";
 import { Avatar, Container, Eyebrow, PageHero, SectionHeading } from "@/components/ui";
 import { site, team, timeline, values } from "@/content/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "About",
   description: `${site.name} is a product studio building simple, AI-powered apps people use every day.`,
-  alternates: { canonical: "/about" },
-};
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

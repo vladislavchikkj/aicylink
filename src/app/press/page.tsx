@@ -4,12 +4,13 @@ import { LogoMark } from "@/components/logo";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 import { Container, PageHero, SectionHeading } from "@/components/ui";
 import { brandColors, news, site } from "@/content/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Press & brand",
   description: `News, logos and brand assets from ${site.name}.`,
-  alternates: { canonical: "/press" },
-};
+  path: "/press",
+});
 
 const dateFormat = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long" });
 
