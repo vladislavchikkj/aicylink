@@ -274,7 +274,7 @@ export default function CrystalScene() {
   }, []);
 
   return (
-    <div ref={wrapper} className="relative mx-auto aspect-square w-full max-w-[600px]">
+    <div ref={wrapper} className="relative mx-auto aspect-square w-full max-w-[600px] lg:max-w-[min(600px,calc(100svh-18.5rem))]">
       <div className="ice-glow absolute inset-[-8%] rounded-full" aria-hidden />
 
       <div ref={hidden} className="hidden" aria-hidden>

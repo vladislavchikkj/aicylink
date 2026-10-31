@@ -23,7 +23,7 @@ function FadeIn({ children, delay }: { children: React.ReactNode; delay: number 
 const CrystalScene = dynamic(() => import("./crystal-scene"), {
   ssr: false,
   loading: () => (
-    <div className="relative mx-auto aspect-square w-full max-w-[600px]">
+    <div className="relative mx-auto aspect-square w-full max-w-[600px] lg:max-w-[min(600px,calc(100svh-18.5rem))]">
       <div className="ice-glow absolute inset-[-8%] rounded-full" />
     </div>
   ),
@@ -38,14 +38,15 @@ export function Hero() {
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
-    <section id="top">
-      <div ref={ref} className="overflow-hidden">
-        <Container className="grid items-center gap-8 py-14 sm:py-20 lg:grid-cols-[1.05fr_1fr] lg:py-20">
+    // On laptops and desktops the first screen fills the window exactly, principles band pinned to its bottom.
+    <section id="top" className="flex flex-col lg:min-h-[calc(100svh-4rem)]">
+      <div ref={ref} className="flex flex-1 items-center overflow-hidden">
+        <Container className="grid items-center gap-8 py-14 sm:py-20 lg:grid-cols-[1.05fr_1fr] lg:py-10">
           <motion.div style={{ y: textY, opacity: fade }}>
             <FadeIn delay={0.1}>
               <Eyebrow>{site.eyebrow}</Eyebrow>
             </FadeIn>
-            <h1 className="mt-4 text-5xl font-bold tracking-tighter sm:text-6xl lg:text-7xl">
+            <h1 className="mt-4 text-5xl font-bold tracking-tighter sm:text-6xl lg:text-[clamp(3.25rem,min(5.4vw,9svh),5.75rem)] lg:leading-[1.02]">
               <WordsReveal text={site.title} delay={0.2} />
               <WordsReveal text={site.titleAccent} wordClassName="text-ice-gradient" delay={0.45} />
             </h1>

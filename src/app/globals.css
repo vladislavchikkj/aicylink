@@ -141,6 +141,11 @@ body {
   }
 }
 
+/* Vertical rhythm for home sections: tighter on short laptop screens, roomier on tall ones */
+.section-y {
+  padding-block: clamp(4.5rem, 11svh, 8rem);
+}
+
 /* Infinite logo strip */
 .marquee {
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);

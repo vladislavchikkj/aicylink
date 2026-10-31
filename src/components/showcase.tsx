@@ -8,7 +8,9 @@ import { categories, type AppId } from "@/content/site";
 import { AppIcon, appTheme } from "./app-icon";
 import { appScreens, LummieWindow, Phone } from "./app-screens";
 import { EASE_OUT, Reveal, Stagger, StaggerItem } from "./motion/reveal";
+import { ScrollRise } from "./motion/scroll";
 import { StatusBadge } from "./status-badge";
+import { SectionHeading } from "./ui";
 
 const concepts: { id: AppId; name: string; tagline: string; Screen: () => React.JSX.Element }[] = [
   { id: "snap", name: "Platey", tagline: "Calories from a photo", Screen: appScreens.snap },
@@ -43,17 +45,18 @@ export function ProductShowcase() {
             </a>
           </div>
         </div>
-        <LummieWindow />
+        <ScrollRise>
+          <LummieWindow />
+        </ScrollRise>
       </Reveal>
 
       <div className="mt-24">
-        <Reveal className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-widest text-ice-1">In the lab</p>
-            <h3 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">What we&apos;re building next.</h3>
-          </div>
-          <p className="max-w-sm text-muted">Early concepts of apps in development. Want early access? Drop us a line.</p>
-        </Reveal>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <SectionHeading index="02" eyebrow="In the lab" title="What we're building next." />
+          <Reveal>
+            <p className="max-w-sm text-muted">Early concepts of apps in development. Join a waitlist on any app page.</p>
+          </Reveal>
+        </div>
 
         {/* Swipeable row on phones, grid from tablets up */}
         <Stagger

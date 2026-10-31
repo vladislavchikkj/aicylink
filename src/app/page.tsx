@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Careers } from "@/components/careers";
 import { Clients } from "@/components/clients";
 import { Company } from "@/components/company";
 import { Contact } from "@/components/contact";
@@ -19,7 +18,6 @@ export default function Home() {
       <Metrics />
       <Company />
       <Testimonials />
-      <Careers />
       <Contact />
     </>
   );

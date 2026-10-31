@@ -33,9 +33,10 @@ function ProductRow({ product }: { product: Product }) {
 
 export function Products() {
   return (
-    <section id="products" className="scroll-mt-16 bg-surface py-20 sm:py-28">
+    <section id="products" className="section-y scroll-mt-16 bg-surface">
       <Container>
         <SectionHeading
+          index="01"
           eyebrow="Products"
           title="A growing family of AI apps."
           text="We design, build and run every app ourselves. Each one solves one everyday problem — simply and beautifully."
@@ -52,7 +53,7 @@ export function Products() {
                 <p className="mt-3 text-lg font-semibold tracking-tight text-balance">{c.tagline}</p>
 
                 {c.products.length > 0 ? (
-                  <ul className="-mx-3 mt-6 space-y-1">
+                  <ul className="-mx-3 mt-6 space-y-1 md:grid md:grid-cols-2 md:gap-x-2 md:space-y-0 lg:block lg:space-y-1">
                     {c.products.map((p) => (
                       <ProductRow key={p.name} product={p} />
                     ))}

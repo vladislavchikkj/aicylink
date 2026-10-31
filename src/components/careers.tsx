@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { roles, site } from "@/content/site";
-import { Reveal } from "./motion/reveal";
-import { Button, Container, SectionHeading } from "./ui";
 
 export function RoleList({ limit }: { limit?: number }) {
   const shown = limit ? roles.slice(0, limit) : roles;
@@ -40,27 +38,5 @@ export function RoleList({ limit }: { limit?: number }) {
         </Link>
       ))}
     </div>
-  );
-}
-
-export function Careers() {
-  return (
-    <section id="careers" className="scroll-mt-16 py-20 sm:py-28">
-      <Container className="grid gap-12 lg:grid-cols-2">
-        <div>
-          <SectionHeading
-            eyebrow="Careers"
-            title="Join the team building what's next."
-            text="Lean by design. Every person here owns a product end to end — and AI multiplies what each of us can ship."
-          />
-          <Reveal delay={0.25} className="mt-8">
-            <Button href="/careers">Careers at AicyLink</Button>
-          </Reveal>
-        </div>
-        <Reveal from="right" delay={0.15}>
-          <RoleList limit={3} />
-        </Reveal>
-      </Container>
-    </section>
   );
 }

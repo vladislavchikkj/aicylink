@@ -37,7 +37,7 @@ export function Contact() {
                 </h2>
               </Reveal>
               <Reveal delay={0.4}>
-                <p className="mt-4 max-w-lg text-white/70">
+                <p className="mt-4 max-w-lg text-white/70 text-balance">
                   Investors, businesses and future teammates — we&apos;d love to hear from you.
                 </p>
               </Reveal>
