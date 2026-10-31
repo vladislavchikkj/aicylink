@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { categories, companyLinks, nav } from "@/content/site";
 import { AppIcon } from "./app-icon";
 import { Logo } from "./logo";
+import { StatusBadge } from "./status-badge";
 import { Container } from "./ui";
 
 function Chevron() {
@@ -31,8 +32,10 @@ function ProductsPanel() {
                   <Link href={p.href ?? "/#products"} className="flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-surface">
                     <AppIcon id={p.id} className="size-9" />
                     <span>
-                      <span className="font-semibold">{p.name}</span>
-                      {p.status === "soon" && <span className="ml-1.5 font-mono text-[10px] uppercase text-subtle">soon</span>}
+                      <span className="flex items-center gap-1.5">
+                        <span className="font-semibold">{p.name}</span>
+                        {p.status !== "early" && <StatusBadge status={p.status} className="scale-90" />}
+                      </span>
                       <span className="mt-0.5 block text-xs text-muted">{p.description}</span>
                     </span>
                   </Link>

@@ -3,9 +3,10 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Orbitron } from "next/font/google";
 import { useEffect, useState } from "react";
-import type { AppId } from "@/content/site";
+import { categories, type AppId } from "@/content/site";
 import { AppIcon, appTheme, LummieMark } from "./app-icon";
 import { EASE_OUT, Reveal, Stagger, StaggerItem } from "./motion/reveal";
+import { StatusBadge } from "./status-badge";
 
 const orbitron = Orbitron({ subsets: ["latin"], weight: ["500"] });
 
@@ -305,6 +306,8 @@ const concepts: { id: AppId; name: string; tagline: string; Screen: () => React.
   { id: "move", name: "Wallie", tagline: "Wall pilates at home", Screen: MoveScreen },
 ];
 
+const statusOf = (id: AppId) => categories.flatMap((c) => c.products).find((p) => p.id === id)?.status ?? "early";
+
 function Phone({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative mx-auto aspect-[9/19] w-full max-w-[240px] rounded-[2.4rem] bg-[#111] p-2 shadow-[0_40px_80px_-30px_rgba(10,10,10,0.55),inset_0_0_0_1px_rgba(255,255,255,0.08)]">
@@ -329,9 +332,7 @@ export function ProductShowcase() {
               <p className="font-semibold">Lummie</p>
               <p className="text-sm text-muted">Our flagship AI companion</p>
             </div>
-            <span className="ml-2 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] uppercase text-emerald-700">
-              Live
-            </span>
+            <StatusBadge status="flagship" className="ml-2" />
           </div>
           <a href="https://lummie.app" target="_blank" rel="noreferrer" className="text-sm font-semibold transition-colors hover:text-ice-1">
             Try Lummie ↗
@@ -369,6 +370,7 @@ export function ProductShowcase() {
                       />
                     )}
                   </AnimatePresence>
+                  <StatusBadge status={statusOf(id)} className="absolute -top-2.5 left-1/2 z-20 -translate-x-1/2 shadow-sm" />
                   <Phone>
                     <Screen />
                   </Phone>
@@ -379,9 +381,6 @@ export function ProductShowcase() {
                     <p className="truncate text-sm font-semibold">{name}</p>
                     <p className="truncate text-xs text-muted">{tagline}</p>
                   </div>
-                  <span className="ml-auto shrink-0 rounded-full border border-border bg-white px-2 py-0.5 font-mono text-[9px] uppercase text-subtle">
-                    Soon
-                  </span>
                 </div>
               </div>
             </StaggerItem>

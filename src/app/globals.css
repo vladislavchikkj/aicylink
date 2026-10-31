@@ -107,6 +107,40 @@ body {
   opacity: 1;
 }
 
+/* Flagship product badge: ink pill with an icy gradient edge and a passing shine */
+.badge-flagship {
+  background:
+    linear-gradient(var(--ink), var(--ink)) padding-box,
+    linear-gradient(90deg, var(--ice-1), var(--ice-3)) border-box;
+  border: 1px solid transparent;
+}
+
+.badge-flagship svg {
+  color: #fcd34d;
+}
+
+.badge-flagship::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: badge-shine 3.5s ease-in-out infinite;
+}
+
+@keyframes badge-shine {
+  60%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-flagship::after {
+    animation: none;
+  }
+}
+
 /* Infinite logo strip */
 .marquee {
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);

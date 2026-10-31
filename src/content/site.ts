@@ -35,7 +35,8 @@ export type Product = {
   id: AppId;
   name: string;
   description: string;
-  status: "live" | "beta" | "soon";
+  /** flagship: our main live product · beta: public beta · next: launching next · early: in development, early access */
+  status: "flagship" | "beta" | "next" | "early";
   href?: string;
 };
 
@@ -56,8 +57,8 @@ export const categories: Category[] = [
     tagline: "AI tools that turn ideas into something real.",
     color: "var(--ice-1)",
     products: [
-      { id: "lummie", name: "Lummie", description: "An AI companion to chat, talk and create with.", status: "live", href: "https://lummie.app" },
-      { id: "cv", name: "Tailra", description: "Tailor your resume to any job post in seconds.", status: "soon" },
+      { id: "lummie", name: "Lummie", description: "An AI companion to chat, talk and create with.", status: "flagship", href: "https://lummie.app" },
+      { id: "cv", name: "Tailra", description: "Tailor your resume to any job post in seconds.", status: "early" },
     ],
   },
   {
@@ -66,9 +67,9 @@ export const categories: Category[] = [
     tagline: "Personal apps for health, fitness and confidence.",
     color: "var(--ice-2)",
     products: [
-      { id: "snap", name: "Platey", description: "Snap your meal — get calories and macros instantly.", status: "soon" },
-      { id: "glow", name: "Glowie", description: "A personal AI glow-up plan for skin, style and hair.", status: "soon" },
-      { id: "move", name: "Wallie", description: "Wall pilates and somatic workouts made for you.", status: "soon" },
+      { id: "snap", name: "Platey", description: "Snap your meal — get calories and macros instantly.", status: "next" },
+      { id: "glow", name: "Glowie", description: "A personal AI glow-up plan for skin, style and hair.", status: "early" },
+      { id: "move", name: "Wallie", description: "Wall pilates and somatic workouts made for you.", status: "early" },
     ],
   },
   {
@@ -77,9 +78,9 @@ export const categories: Category[] = [
     tagline: "Learning and self-discovery, a few minutes a day.",
     color: "var(--ice-3)",
     products: [
-      { id: "learn", name: "Nibble", description: "Five-minute daily lessons on AI, money and focus.", status: "soon" },
-      { id: "stars", name: "Lunara", description: "AI astrology, birth charts and tarot readings.", status: "soon" },
-      { id: "dreams", name: "Dreamie", description: "A dream journal with AI interpretations.", status: "soon" },
+      { id: "learn", name: "Nibble", description: "Five-minute daily lessons on AI, money and focus.", status: "early" },
+      { id: "stars", name: "Lunara", description: "AI astrology, birth charts and tarot readings.", status: "next" },
+      { id: "dreams", name: "Dreamie", description: "A dream journal with AI interpretations.", status: "early" },
     ],
   },
 ];

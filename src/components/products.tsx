@@ -1,19 +1,13 @@
 import Link from "next/link";
 import { categories, type Product } from "@/content/site";
 import { AppIcon } from "./app-icon";
+import { StatusBadge } from "./status-badge";
 import { Stagger, StaggerItem } from "./motion/reveal";
 import { Spotlight } from "./motion/spotlight";
 import { ProductShowcase } from "./showcase";
 import { Container, SectionHeading } from "./ui";
 
-const statusStyle: Record<Product["status"], { label: string; className: string }> = {
-  live: { label: "Live", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-  beta: { label: "Beta", className: "border-sky-200 bg-sky-50 text-sky-700" },
-  soon: { label: "Soon", className: "border-border bg-surface text-subtle" },
-};
-
 function ProductRow({ product }: { product: Product }) {
-  const status = statusStyle[product.status];
   return (
     <li>
       <Link
@@ -30,9 +24,7 @@ function ProductRow({ product }: { product: Product }) {
           </span>
           <span className="mt-0.5 block text-sm text-muted">{product.description}</span>
         </span>
-        <span className={`shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase ${status.className}`}>
-          {status.label}
-        </span>
+        <StatusBadge status={product.status} />
       </Link>
     </li>
   );
