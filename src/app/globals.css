@@ -28,6 +28,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Reveal animations and decorative glows start outside the viewport; clip them so
+   phones never get a sideways scroll. `clip` (unlike `hidden`) keeps the sticky header working. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

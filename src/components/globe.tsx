@@ -154,7 +154,7 @@ export function Globe() {
       {orbit.map((o, i) => (
         <motion.div
           key={o.id}
-          className={`absolute ${o.className} hidden sm:block`}
+          className={`absolute ${o.className} origin-center scale-75 sm:scale-100`}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.9, delay: 1.3 + i * 0.12, ease: EASE_OUT }}

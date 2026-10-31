@@ -51,7 +51,7 @@ export function Careers() {
           <SectionHeading
             eyebrow="Careers"
             title="Join the team building what's next."
-            text="We're a small, senior team. Everyone ships, everyone owns their work, and every product starts from a blank page."
+            text="We're a small team. Everyone ships, everyone owns their work, and every product starts from a blank page."
           />
           <Reveal delay={0.25} className="mt-8">
             <Button href="/careers">Careers at AicyLink</Button>

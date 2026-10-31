@@ -136,7 +136,7 @@ function SnapScreen() {
   return (
     <div className="flex h-full flex-col bg-[#f3fbf7] px-4 pb-4 pt-10">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-700/70">Today</p>
-      <div className="relative mx-auto mt-3 size-32">
+      <div className="relative mx-auto mt-3 size-32 shrink-0">
         <svg viewBox="0 0 120 120" className="size-full -rotate-90">
           <circle cx="60" cy="60" r="50" fill="none" stroke="#d1fae5" strokeWidth="11" />
           <motion.circle
@@ -188,7 +188,7 @@ function GlowScreen() {
   const plan = ["Vitamin C serum", "2L water", "SPF 50 before 11am", "Curtain bangs?"];
   return (
     <div className="flex h-full flex-col bg-gradient-to-b from-[#fff1f2] to-[#fff7ed] px-4 pb-4 pt-10">
-      <div className="relative mx-auto mt-1 flex size-32 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-rose-200 via-orange-100 to-amber-200">
+      <div className="relative mx-auto mt-1 flex size-32 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-rose-200 via-orange-100 to-amber-200">
         <svg viewBox="0 0 100 100" className="absolute inset-0 size-full text-rose-400/70">
           {Array.from({ length: 24 }, (_, i) => (
             <circle key={i} cx={20 + (i % 6) * 12} cy={22 + Math.floor(i / 6) * 16} r="1.4" fill="currentColor" />
@@ -220,7 +220,7 @@ function StarsScreen() {
   const signs = "♈♉♊♋♌♍♎♏♐♑♒♓".split("");
   return (
     <div className="flex h-full flex-col bg-[#0b0820] px-4 pb-4 pt-10 text-white">
-      <div className="relative mx-auto size-36">
+      <div className="relative mx-auto size-36 shrink-0">
         <motion.svg viewBox="0 0 120 120" className="size-full" animate={{ rotate: 360 }} transition={{ duration: 60, repeat: Infinity, ease: "linear" }}>
           <circle cx="60" cy="60" r="56" fill="none" stroke="rgba(196,181,253,0.35)" />
           <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(196,181,253,0.2)" />
@@ -265,7 +265,7 @@ function MoveScreen() {
     <div className="flex h-full flex-col bg-[#fff7ed] px-4 pb-4 pt-10">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-orange-600/80">Day 12 of 28</p>
       <p className="mt-1 text-lg font-bold leading-tight tracking-tight text-orange-950">Wall Pilates · Core</p>
-      <div className="relative mt-3 flex h-28 items-end justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500">
+      <div className="relative mt-3 flex h-28 shrink-0 items-end justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500">
         <motion.svg
           viewBox="0 0 120 70"
           className="w-36 text-white"
@@ -299,10 +299,10 @@ function MoveScreen() {
 }
 
 const concepts: { id: AppId; name: string; tagline: string; Screen: () => React.JSX.Element }[] = [
-  { id: "snap", name: "Aicy Snap", tagline: "Calories from a photo", Screen: SnapScreen },
-  { id: "glow", name: "Aicy Glow", tagline: "Your glow-up plan", Screen: GlowScreen },
-  { id: "stars", name: "Aicy Stars", tagline: "Astrology & tarot", Screen: StarsScreen },
-  { id: "move", name: "Aicy Move", tagline: "Wall pilates at home", Screen: MoveScreen },
+  { id: "snap", name: "Platey", tagline: "Calories from a photo", Screen: SnapScreen },
+  { id: "glow", name: "Glowie", tagline: "Your glow-up plan", Screen: GlowScreen },
+  { id: "stars", name: "Lunara", tagline: "Astrology & tarot", Screen: StarsScreen },
+  { id: "move", name: "Wallie", tagline: "Wall pilates at home", Screen: MoveScreen },
 ];
 
 function Phone({ children }: { children: React.ReactNode }) {
@@ -349,9 +349,13 @@ export function ProductShowcase() {
           <p className="max-w-sm text-muted">Early concepts of apps in development. Want early access? Drop us a line.</p>
         </Reveal>
 
-        <Stagger className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-4" stagger={0.12}>
+        {/* Swipeable row on phones, grid from tablets up */}
+        <Stagger
+          className="-mx-4 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-6 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-4 sm:gap-y-10 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+          stagger={0.12}
+        >
           {concepts.map(({ id, name, tagline, Screen }) => (
-            <StaggerItem key={id} from="up">
+            <StaggerItem key={id} from="up" className="w-[230px] shrink-0 snap-center sm:w-auto">
               <div onPointerEnter={() => setHovered(id)} onPointerLeave={() => setHovered(null)}>
                 <motion.div animate={{ y: hovered === id ? -10 : 0 }} transition={{ duration: 0.5, ease: EASE_OUT }} className="relative">
                   <AnimatePresence>

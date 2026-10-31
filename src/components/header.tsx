@@ -132,15 +132,17 @@ export function Header() {
             </summary>
             <div className="absolute inset-x-0 top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-border bg-white px-4 py-6 shadow-lg">
               <p className="font-mono text-xs font-semibold uppercase tracking-widest text-subtle">Products</p>
-              <ul className="mt-3 space-y-3">
-                {categories.map((c) => (
-                  <li key={c.id}>
-                    <Link href="/#products" className="font-semibold">
-                      {c.name}
-                    </Link>
-                    <p className="text-sm text-muted">{c.products.map((p) => p.name).join(" · ") || c.tagline}</p>
-                  </li>
-                ))}
+              <ul className="mt-4 grid grid-cols-4 gap-x-2 gap-y-4">
+                {categories
+                  .flatMap((c) => c.products)
+                  .map((p) => (
+                    <li key={p.id}>
+                      <Link href={p.href ?? "/#products"} className="flex flex-col items-center gap-1.5 text-center">
+                        <AppIcon id={p.id} className="size-12" />
+                        <span className="text-[11px] font-medium leading-tight">{p.name}</span>
+                      </Link>
+                    </li>
+                  ))}
               </ul>
               <p className="mt-8 font-mono text-xs font-semibold uppercase tracking-widest text-subtle">Company</p>
               <ul className="mt-3 space-y-3">
