@@ -23,9 +23,9 @@ export const site = {
   pressEmail: email,
   careersEmail: email,
   linkedin: "https://www.linkedin.com/company/aicylink",
-  eyebrow: "AicyLink platform",
-  title: "Web services for the",
-  titleAccent: "connected world.",
+  eyebrow: "AI product studio",
+  title: "AI apps for",
+  titleAccent: "everyday life.",
   description:
     "AicyLink is a product studio building simple, AI-powered apps that people use every day — for creating, feeling better and discovering more about themselves.",
 };

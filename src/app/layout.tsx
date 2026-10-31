@@ -17,8 +17,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Search titles lead with what people search for; the hero headline stays more poetic.
-const defaultTitle = `${site.name} — AI apps for everyday life`;
+const defaultTitle = `${site.name} — ${site.title} ${site.titleAccent.replace(/\.$/, "")}`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
