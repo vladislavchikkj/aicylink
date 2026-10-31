@@ -9,9 +9,9 @@ export function RoleList({ limit }: { limit?: number }) {
   if (!shown.length) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-white p-8">
-        <p className="font-semibold">No open roles right now.</p>
+        <p className="font-semibold">We hire selectively as the portfolio grows.</p>
         <p className="mt-2 text-sm text-muted">
-          We&apos;re always happy to meet great people — send us a note at{" "}
+          Exceptional people can reach us anytime at{" "}
           <a href={`mailto:${site.careersEmail}`} className="font-semibold text-foreground hover:text-ice-1">
             {site.careersEmail}
           </a>
@@ -51,7 +51,7 @@ export function Careers() {
           <SectionHeading
             eyebrow="Careers"
             title="Join the team building what's next."
-            text="We're a small team. Everyone ships, everyone owns their work, and every product starts from a blank page."
+            text="Lean by design. Every person here owns a product end to end — and AI multiplies what each of us can ship."
           />
           <Reveal delay={0.25} className="mt-8">
             <Button href="/careers">Careers at AicyLink</Button>

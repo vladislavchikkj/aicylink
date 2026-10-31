@@ -78,7 +78,7 @@ export default function AboutPage() {
             <SectionHeading
               eyebrow="Leadership"
               title="The people behind AicyLink."
-              text="A small, hands-on team that designs, builds and grows every product itself."
+              text="A focused, senior-minded team that designs, builds and grows every product in-house."
             />
             <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
               {team.map((m, i) => (

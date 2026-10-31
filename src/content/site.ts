@@ -150,7 +150,7 @@ export const timeline = [
 export const values = [
   { title: "Simple wins", text: "Every app does one thing — and does it really well." },
   { title: "Own the outcome", text: "Every person owns their work from the first idea to the last metric." },
-  { title: "Move with clarity", text: "Small teams, written thinking, fast decisions." },
+  { title: "Move with clarity", text: "Focused teams, written thinking, fast decisions." },
   { title: "Earn trust daily", text: "Reliability, security and honesty are part of the product." },
 ];
 
@@ -168,7 +168,7 @@ export const roles: Role[] = [];
 export const perks = [
   { title: "Remote-first", text: "Work from wherever you do your best work." },
   { title: "Real ownership", text: "Own a product end to end — from idea to growth." },
-  { title: "Ship fast", text: "Small team, short loops: ideas reach real users in weeks." },
+  { title: "Ship fast", text: "Short loops: ideas reach real users in weeks, not quarters." },
   { title: "AI-native stack", text: "Build with the latest models, tools and frameworks." },
 ];
 

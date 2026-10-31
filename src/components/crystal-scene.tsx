@@ -9,7 +9,7 @@ import { AppIcon, appTheme } from "./app-icon";
 
 const ORDER: AppId[] = ["lummie", "snap", "stars", "glow", "cv", "learn", "move", "dreams"];
 
-// Two tilted rings; Lummie leads the inner one and is drawn larger as the flagship.
+// Two tilted orbits (no visible track); Lummie leads the inner one and is drawn larger as the flagship.
 const RINGS = [
   { radius: 2.05, tilt: [0.35, 0, -0.18] as const, speed: 0.16, ids: ORDER.slice(0, 4) },
   { radius: 2.8, tilt: [-0.28, 0, 0.22] as const, speed: -0.1, ids: ORDER.slice(4) },
@@ -151,10 +151,6 @@ function Ring({
 
   return (
     <group rotation={tilt}>
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[radius, 0.006, 8, 160]} />
-        <meshBasicMaterial color="#7dd3fc" transparent opacity={0.35} />
-      </mesh>
       <group ref={spin}>
         {ids.map((id, i) => {
           const angle = (i / ids.length) * Math.PI * 2;
