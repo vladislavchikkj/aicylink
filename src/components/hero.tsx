@@ -1,9 +1,9 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "motion/react";
+import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { principles, site } from "@/content/site";
-import { Globe } from "./globe";
 import { EASE_OUT, Stagger, StaggerItem, WordsReveal } from "./motion/reveal";
 import { Button, Container, Eyebrow } from "./ui";
 
@@ -19,11 +19,21 @@ function FadeIn({ children, delay }: { children: React.ReactNode; delay: number 
   );
 }
 
+// three.js loads after the page is interactive; a soft glow holds the space meanwhile.
+const CrystalScene = dynamic(() => import("./crystal-scene"), {
+  ssr: false,
+  loading: () => (
+    <div className="relative mx-auto aspect-square w-full max-w-[600px]">
+      <div className="ice-glow absolute inset-[-8%] rounded-full" />
+    </div>
+  ),
+});
+
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const globeY = useTransform(scrollYProgress, [0, 1], [0, 160]);
-  const globeScale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
+  const sceneY = useTransform(scrollYProgress, [0, 1], [0, 160]);
+  const sceneScale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
   const textY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
@@ -52,13 +62,13 @@ export function Hero() {
             </FadeIn>
           </motion.div>
 
-          <motion.div style={{ y: globeY, scale: globeScale }}>
+          <motion.div style={{ y: sceneY, scale: sceneScale }}>
             <motion.div
               initial={{ opacity: 0, scale: 0.85, rotate: -8 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ duration: 1.6, delay: 0.2, ease: EASE_OUT }}
             >
-              <Globe />
+              <CrystalScene />
             </motion.div>
           </motion.div>
         </Container>

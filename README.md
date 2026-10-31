@@ -1,6 +1,6 @@
 # AicyLink
 
-Company website for AicyLink — Next.js 15, Tailwind CSS 4, Motion, Lenis, cobe.
+Company website for AicyLink — Next.js 15, Tailwind CSS 4, Motion, Lenis, React Three Fiber.
 
 ## Develop
 
