@@ -298,6 +298,9 @@ export default function CrystalScene() {
         camera={{ position: [0, 0, 9.2], fov: 40 }}
         dpr={[1, env.mobile ? 1.5 : 1.75]}
         frameloop={visible ? "always" : "never"}
+        // Measure layout size, not the on-screen box: the hero scales this block while scrolling,
+        // and a size taken mid-scale would leave the scene drawn smaller and off-center.
+        resize={{ offsetSize: true }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         onCreated={() => setReady(true)}
         aria-label="Interactive ice crystal surrounded by AicyLink apps"
