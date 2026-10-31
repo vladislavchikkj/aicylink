@@ -1,6 +1,6 @@
 "use client";
 
-import { Billboard, Environment, Float, Lightformer, MeshTransmissionMaterial, PresentationControls } from "@react-three/drei";
+import { Billboard, Environment, Lightformer, MeshTransmissionMaterial, PresentationControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -14,6 +14,11 @@ const RINGS = [
   { radius: 2.05, tilt: [0.35, 0, -0.18] as const, speed: 0.16, ids: ORDER.slice(0, 4) },
   { radius: 2.8, tilt: [-0.28, 0, 0.22] as const, speed: -0.1, ids: ORDER.slice(4) },
 ];
+
+// The render loop pauses off screen; when it resumes, the first frame's delta covers the
+// whole pause. Clamping it keeps every animation continuing smoothly instead of jumping.
+const MAX_STEP = 1 / 30;
+const step = (delta: number) => Math.min(delta, MAX_STEP);
 
 const TILE = 0.78;
 const TILE_RADIUS = 0.23 * TILE;
@@ -102,10 +107,11 @@ function useTileGeometry() {
 
 function IconTile({ id, texture, geometry, angle }: { id: AppId; texture?: THREE.Texture; geometry: THREE.BufferGeometry; angle: number }) {
   const wobble = useRef<THREE.Group>(null);
+  const time = useRef(angle * 3);
   const scale = id === "lummie" ? 1.3 : 1;
 
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime + angle * 3;
+  useFrame((_, delta) => {
+    const t = (time.current += step(delta));
     if (wobble.current) {
       wobble.current.rotation.y = Math.sin(t * 0.6) * 0.35;
       wobble.current.rotation.x = Math.cos(t * 0.5) * 0.15;
@@ -140,7 +146,7 @@ function Ring({
 }: (typeof RINGS)[number] & { textures: Partial<Record<AppId, THREE.Texture>>; geometry: THREE.BufferGeometry; still: boolean }) {
   const spin = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
-    if (spin.current && !still) spin.current.rotation.y += delta * speed;
+    if (spin.current && !still) spin.current.rotation.y += step(delta) * speed;
   });
 
   return (
@@ -180,9 +186,18 @@ function Crystal({ mobile }: { mobile: boolean }) {
   const main = useCrystalGeometry(3.1, 0.82);
   const small = useCrystalGeometry(1.6, 0.42);
   const spin = useRef<THREE.Group>(null);
+  const bob = useRef<THREE.Group>(null);
+  const time = useRef(0);
 
   useFrame((_, delta) => {
-    if (spin.current) spin.current.rotation.y += delta * 0.12;
+    const dt = step(delta);
+    const t = (time.current += dt);
+    if (spin.current) spin.current.rotation.y += dt * 0.12;
+    if (bob.current) {
+      bob.current.position.y = Math.sin(t * 0.9) * 0.12;
+      bob.current.rotation.z = Math.sin(t * 0.6) * 0.04;
+      bob.current.rotation.x = Math.cos(t * 0.5) * 0.05;
+    }
   });
 
   const material = (
@@ -197,7 +212,7 @@ function Crystal({ mobile }: { mobile: boolean }) {
       anisotropicBlur={0.2}
       distortion={0.25}
       distortionScale={0.4}
-      temporalDistortion={0.08}
+      temporalDistortion={0}
       color="#e0f2fe"
       attenuationColor="#7dd3fc"
       attenuationDistance={4}
@@ -208,7 +223,7 @@ function Crystal({ mobile }: { mobile: boolean }) {
   );
 
   return (
-    <Float speed={1.4} rotationIntensity={0.25} floatIntensity={0.6}>
+    <group ref={bob}>
       <group ref={spin} scale={1.3}>
         <mesh geometry={main}>{material}</mesh>
         <mesh geometry={small} position={[0.62, -0.75, 0.2]} rotation={[0.2, 0.4, -0.55]}>
@@ -224,16 +239,17 @@ function Crystal({ mobile }: { mobile: boolean }) {
         </mesh>
         <pointLight color="#38bdf8" intensity={6} distance={4} />
       </group>
-    </Float>
+    </group>
   );
 }
 
 /** Gently moves the camera toward the pointer for depth. */
 function ParallaxRig({ still }: { still: boolean }) {
-  useFrame(({ camera, pointer }) => {
+  useFrame(({ camera, pointer }, delta) => {
     if (still) return;
-    camera.position.x += (pointer.x * 0.6 - camera.position.x) * 0.04;
-    camera.position.y += (0.4 + pointer.y * 0.4 - camera.position.y) * 0.04;
+    const k = 1 - Math.exp(-step(delta) * 2.5);
+    camera.position.x += (pointer.x * 0.6 - camera.position.x) * k;
+    camera.position.y += (0.4 + pointer.y * 0.4 - camera.position.y) * k;
     camera.lookAt(0, 0, 0);
   });
   return null;
