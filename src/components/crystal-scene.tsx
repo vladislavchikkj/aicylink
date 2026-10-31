@@ -194,7 +194,7 @@ function Crystal({ mobile }: { mobile: boolean }) {
     const t = (time.current += dt);
     if (spin.current) spin.current.rotation.y += dt * 0.12;
     if (bob.current) {
-      bob.current.position.y = Math.sin(t * 0.9) * 0.12;
+      bob.current.position.y = Math.sin(t * 0.9) * 0.05;
       bob.current.rotation.z = Math.sin(t * 0.6) * 0.04;
       bob.current.rotation.x = Math.cos(t * 0.5) * 0.05;
     }
@@ -243,16 +243,16 @@ function Crystal({ mobile }: { mobile: boolean }) {
   );
 }
 
-/** Gently moves the camera toward the pointer for depth. */
-function ParallaxRig({ still }: { still: boolean }) {
-  useFrame(({ camera, pointer }, delta) => {
-    if (still) return;
+/** Tilts the scene toward the pointer. It rotates in place, so the crystal stays centered in its glow. */
+function TiltRig({ still, children }: { still: boolean; children: React.ReactNode }) {
+  const tilt = useRef<THREE.Group>(null);
+  useFrame(({ pointer }, delta) => {
+    if (still || !tilt.current) return;
     const k = 1 - Math.exp(-step(delta) * 2.5);
-    camera.position.x += (pointer.x * 0.6 - camera.position.x) * k;
-    camera.position.y += (0.4 + pointer.y * 0.4 - camera.position.y) * k;
-    camera.lookAt(0, 0, 0);
+    tilt.current.rotation.y += (pointer.x * 0.18 - tilt.current.rotation.y) * k;
+    tilt.current.rotation.x += (-pointer.y * 0.1 - tilt.current.rotation.x) * k;
   });
-  return null;
+  return <group ref={tilt}>{children}</group>;
 }
 
 export default function CrystalScene() {
@@ -295,7 +295,7 @@ export default function CrystalScene() {
         }`}
         // On touch screens the scene only animates, so swipes keep scrolling the page.
         style={env.touch ? { touchAction: "pan-y" } : undefined}
-        camera={{ position: [0, 0.4, 9.2], fov: 40 }}
+        camera={{ position: [0, 0, 9.2], fov: 40 }}
         dpr={[1, env.mobile ? 1.5 : 1.75]}
         frameloop={visible ? "always" : "never"}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
@@ -321,12 +321,13 @@ export default function CrystalScene() {
           polar={[-0.35, 0.35]}
           azimuth={[-Math.PI / 1.5, Math.PI / 1.5]}
         >
-          <Crystal mobile={env.mobile} />
-          {RINGS.map((ring) => (
-            <Ring key={ring.radius} {...ring} textures={textures} geometry={geometry} still={env.still} />
-          ))}
+          <TiltRig still={env.still || env.touch}>
+            <Crystal mobile={env.mobile} />
+            {RINGS.map((ring) => (
+              <Ring key={ring.radius} {...ring} textures={textures} geometry={geometry} still={env.still} />
+            ))}
+          </TiltRig>
         </PresentationControls>
-        <ParallaxRig still={env.still} />
       </Canvas>
     </div>
   );
