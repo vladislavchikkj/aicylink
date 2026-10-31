@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { appHref } from "@/content/apps";
 import { categories, companyLinks, legalLinks, site } from "@/content/site";
 import { Logo } from "./logo";
 import { Reveal } from "./motion/reveal";
@@ -8,7 +9,7 @@ export function Footer() {
   const columns = [
     {
       title: "Products",
-      links: categories.flatMap((c) => c.products).map((p) => ({ label: p.name, href: p.href ?? "/#products" })),
+      links: categories.flatMap((c) => c.products).map((p) => ({ label: p.name, href: appHref(p.id) })),
     },
     { title: "Company", links: companyLinks.map((l) => ({ label: l.label, href: l.href })) },
     {

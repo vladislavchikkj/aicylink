@@ -23,6 +23,30 @@ Legal pages in `src/app/legal/` contain template text and should be reviewed by 
 There is no backend: the form on `/contact` opens the visitor's email app with a
 pre-filled message to `site.email`.
 
+## Waitlist
+
+App pages (`/apps/<slug>`) have an early-access waitlist. Sign-ups are posted to
+`/api/waitlist`, which forwards them to the URL in `WAITLIST_WEBHOOK_URL`. The free
+setup is a Google Sheet with an Apps Script:
+
+1. Create a Google Sheet, then Extensions → Apps Script, and paste:
+
+   ```js
+   function doPost(e) {
+     const d = JSON.parse(e.postData.contents);
+     SpreadsheetApp.getActiveSheet().appendRow([d.createdAt, d.email, d.app, d.country]);
+     return ContentService.createTextOutput("ok");
+   }
+   ```
+
+2. Deploy → New deployment → Web app, "Execute as: Me", "Who has access: Anyone".
+3. Copy the web app URL into `WAITLIST_WEBHOOK_URL` in Vercel (Settings → Environment
+   Variables) and redeploy.
+
+Without the variable the form shows an email fallback.
+
+App page copy lives in [`src/content/apps.ts`](src/content/apps.ts).
+
 ## SEO and domain
 
 The canonical address is `site.url` (default `https://aicylink.vercel.app`).

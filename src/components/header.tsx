@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { appHref } from "@/content/apps";
 import { categories, companyLinks, nav } from "@/content/site";
 import { AppIcon } from "./app-icon";
 import { Logo } from "./logo";
@@ -29,7 +30,7 @@ function ProductsPanel() {
             {c.products.length > 0 ? (
               c.products.map((p) => (
                 <li key={p.name}>
-                  <Link href={p.href ?? "/#products"} className="flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-surface">
+                  <Link href={appHref(p.id)} className="flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-surface">
                     <AppIcon id={p.id} className="size-9" />
                     <span>
                       <span className="flex items-center gap-1.5">
@@ -140,7 +141,7 @@ export function Header() {
                   .flatMap((c) => c.products)
                   .map((p) => (
                     <li key={p.id}>
-                      <Link href={p.href ?? "/#products"} className="flex flex-col items-center gap-1.5 text-center">
+                      <Link href={appHref(p.id)} className="flex flex-col items-center gap-1.5 text-center">
                         <AppIcon id={p.id} className="size-12" />
                         <span className="text-[11px] font-medium leading-tight">{p.name}</span>
                       </Link>

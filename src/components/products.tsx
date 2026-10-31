@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { appHref } from "@/content/apps";
 import { categories, type Product } from "@/content/site";
 import { AppIcon } from "./app-icon";
 import { StatusBadge } from "./status-badge";
@@ -11,7 +12,7 @@ function ProductRow({ product }: { product: Product }) {
   return (
     <li>
       <Link
-        href={product.href ?? "/contact?topic=product"}
+        href={appHref(product.id)}
         className="group/row flex items-start gap-3.5 rounded-lg p-3 transition-colors hover:bg-surface"
       >
         <AppIcon id={product.id} className="size-11 transition-transform duration-300 group-hover/row:-rotate-6 group-hover/row:scale-105" />

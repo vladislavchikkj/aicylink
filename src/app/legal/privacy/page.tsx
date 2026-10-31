@@ -26,7 +26,8 @@ export default function PrivacyPage() {
         {
           title: "Data we collect",
           body: [
-            "Information you provide, such as your name, email address, company and the content of messages you send through our contact form.",
+            "Information you provide, such as your name, email address, company and the content of messages you send us.",
+            "If you join a waitlist, your email address, the app you signed up for and an approximate country. We use it only to tell you about early access to that app, and you can unsubscribe at any time.",
             "Technical data collected automatically, such as IP address, browser type, device information and pages visited, collected through essential and — with your consent — analytics cookies.",
           ],
         },
