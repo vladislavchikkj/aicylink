@@ -12,10 +12,9 @@ export function Eyebrow({ children, className }: { children: React.ReactNode; cl
   );
 }
 
-/** Section title. `index` adds a numbered label ("01 — Products") for the home page's section system. */
 /**
  * One home-page chapter. From laptops up it fills the screen below the header with its content
- * centered; the page snaps to chapters and the side rail lists them by `label`.
+ * centered; the side rail lists chapters by `label`.
  */
 export function Chapter({ id, label, className = "", children }: { id: string; label: string; className?: string; children: React.ReactNode }) {
   return (
@@ -29,6 +28,7 @@ export function Chapter({ id, label, className = "", children }: { id: string; l
   );
 }
 
+/** Section title. `index` adds a numbered label ("01 — Products") for the home page's section system. */
 export function SectionHeading({
   eyebrow,
   title,
