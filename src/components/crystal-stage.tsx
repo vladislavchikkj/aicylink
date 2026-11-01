@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as THREE from "three";
-import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry.js";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { allApps, appHref } from "@/content/apps";
 import type { AppId } from "@/content/site";
 import { AppIcon, appTheme } from "./app-icon";
@@ -196,8 +194,9 @@ function Ring({
   );
 }
 
-// AicyLink's crystal: a cluster of six-sided points of different length and lean, growing out
-// of a faceted base. Everything is merged into one mesh so it costs a single glass pass.
+// AicyLink's crystal: one hexagonal point of clear violet glass, floating, pointed at both ends —
+// a long tip above and a short one below, slightly tapering toward the top.
+const CRYSTAL = { radius: 0.56, length: 1.7, tip: 0.85, foot: 0.45, taper: 0.9 };
 
 /** One hexagonal point: a prism standing on y = 0 with a pyramid tip. */
 function prism(radius: number, length: number, tip: number) {
@@ -212,53 +211,18 @@ function prism(radius: number, length: number, tip: number) {
   return geometry;
 }
 
-type Point = { radius: number; length: number; tip: number; at: [number, number, number]; lean: [number, number, number] };
-
-const POINTS: Point[] = [
-  { radius: 0.4, length: 1.75, tip: 0.72, at: [-0.12, -0.95, 0], lean: [0.04, 0, 0.1] },
-  { radius: 0.34, length: 1.15, tip: 0.6, at: [0.42, -0.95, -0.12], lean: [0.12, 0.3, -0.6] },
-  { radius: 0.27, length: 0.95, tip: 0.48, at: [0.18, -0.95, 0.32], lean: [0.45, 0.2, -0.22] },
-  { radius: 0.28, length: 0.85, tip: 0.46, at: [-0.42, -0.95, 0.12], lean: [0.2, -0.2, 0.95] },
-  { radius: 0.22, length: 0.7, tip: 0.38, at: [0.02, -0.95, -0.4], lean: [-0.55, 0, -0.12] },
-];
-
-// The rock the points grow from: a low, lopsided gem.
-const BASE: [number, number, number][] = [
-  [-0.95, 0, 0.1],
-  [-0.6, 0.22, 0.55],
-  [0.1, 0.25, 0.7],
-  [0.8, 0.15, 0.45],
-  [1.0, 0, -0.1],
-  [0.55, 0.2, -0.65],
-  [-0.2, 0.22, -0.7],
-  [-0.75, 0.12, -0.45],
-  [-0.55, -0.32, 0.3],
-  [0.45, -0.35, 0.35],
-  [0.3, -0.3, -0.4],
-  [-0.4, -0.3, -0.35],
-];
-
-function useClusterGeometry() {
+function useCrystalGeometry() {
   return useMemo(() => {
-    const parts = POINTS.map((p) => {
-      const g = prism(p.radius, p.length, p.tip);
-      g.applyMatrix4(
-        new THREE.Matrix4().compose(
-          new THREE.Vector3(...p.at),
-          new THREE.Quaternion().setFromEuler(new THREE.Euler(...p.lean)),
-          new THREE.Vector3(1, 1, 1),
-        ),
-      );
-      return g;
-    });
-    const base = new ConvexGeometry(BASE.map(([x, y, z]) => new THREE.Vector3(x * 0.85, y - 0.95, z * 0.75)));
-    const geometry = mergeGeometries([base, ...parts])!;
-    // Where the tallest point ends, for the glint.
-    const p = POINTS[0];
-    const tip = new THREE.Vector3(0, p.length + p.tip, 0)
-      .applyEuler(new THREE.Euler(...p.lean))
-      .add(new THREE.Vector3(...p.at));
-    return { geometry, tip: tip.toArray() as [number, number, number] };
+    const { radius, length, tip, foot, taper } = CRYSTAL;
+    const bottom = -(length + tip + foot) / 2 + 0.1;
+    const profile = [
+      new THREE.Vector2(0, bottom),
+      new THREE.Vector2(radius, bottom + foot),
+      new THREE.Vector2(radius * taper, bottom + foot + length),
+      new THREE.Vector2(0, bottom + foot + length + tip),
+    ];
+    const geometry = new THREE.LatheGeometry(profile, 6).toNonIndexed();
+    return { geometry, tip: [0, bottom + foot + length + tip, 0] as [number, number, number] };
   }, []);
 }
 
@@ -364,7 +328,7 @@ function Crystal({
   /** DOM pill that names the hovered app; positioned here every frame. */
   label: React.RefObject<HTMLSpanElement | null>;
 }) {
-  const { geometry: main, tip: glintAt } = useClusterGeometry();
+  const { geometry: main, tip: glintAt } = useCrystalGeometry();
   const small = usePrismGeometry(0.2, 0.6, 0.3);
   const medium = usePrismGeometry(0.26, 0.85, 0.4);
   const glowTexture = useRadialTexture([
@@ -549,10 +513,10 @@ function Crystal({
               flatShading
               samples={6}
               resolution={512}
-              thickness={1.2}
+              thickness={1.6}
               roughness={0.02}
               ior={1.5}
-              chromaticAberration={0.35}
+              chromaticAberration={0.6}
               anisotropicBlur={0.1}
               distortion={0.08}
               distortionScale={0.3}
@@ -561,10 +525,12 @@ function Crystal({
               clearcoatRoughness={0.03}
               iridescence={0.3}
               iridescenceIOR={1.5}
-              color="#dde0ff"
+              color="#e6e8ff"
               attenuationColor="#5b5bf0"
-              attenuationDistance={1.8}
-              envMapIntensity={1.6}
+              attenuationDistance={2.4}
+              envMapIntensity={1.8}
+              backside
+              backsideThickness={0.8}
               background={ICE_BACKGROUND}
             />
           )}
