@@ -32,7 +32,9 @@ export function Hero() {
     // On laptops and desktops the first screen fills the window exactly, principles band pinned to its bottom.
     <section id="top" data-chapter="Intro" className="relative isolate flex flex-col lg:min-h-[calc(100svh-4rem)]">
       <div className="aurora pointer-events-none absolute inset-0 -z-10" aria-hidden />
-      <div ref={ref} className="flex flex-1 items-center overflow-hidden">
+      {/* Covers the whole first screen so tiles can fly anywhere; the clump rests on the box below */}
+      <AppMagnetLoader />
+      <div ref={ref} className="relative z-10 flex flex-1 items-center">
         <Container className="grid items-center gap-8 py-14 sm:py-20 lg:grid-cols-[1.05fr_1fr] lg:py-10">
           <motion.div style={{ y: textY, opacity: fade }}>
             <FadeIn delay={0.1}>
@@ -57,9 +59,7 @@ export function Hero() {
 
           {/* Our apps and blocks of ice, magnetised together; the pointer pushes them apart */}
           <motion.div style={{ y: sceneY, scale: sceneScale }}>
-            <div className="relative mx-auto aspect-square w-full max-w-[600px] lg:max-w-[min(600px,calc(100svh-15rem))]">
-              <AppMagnetLoader />
-            </div>
+            <div data-magnet-anchor className="relative mx-auto aspect-square w-full max-w-[600px] lg:max-w-[min(600px,calc(100svh-15rem))]" />
           </motion.div>
         </Container>
       </div>

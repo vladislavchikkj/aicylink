@@ -34,6 +34,8 @@ type Body = {
 };
 
 const MAX_STEP = 1 / 30;
+/** World units the resting clump is laid out in; it is scaled so this spans the anchor box. */
+const CLUMP_SIZE = 5.1;
 // What the ice refracts: the hero's pale backdrop instead of the transparent (black) canvas.
 const ICE_BACKGROUND = new THREE.Color("#f6f3ff");
 
@@ -52,17 +54,17 @@ function makeBodies(count: number): Body[] {
   return order.map((i, n) => {
     const kind = kinds[i];
     const angle = rand() * Math.PI * 2;
-    const from = new THREE.Vector3(Math.cos(angle) * 9, Math.sin(angle) * 7, -2 + rand() * 4);
+    const from = new THREE.Vector3(Math.cos(angle) * 11, Math.sin(angle) * 8, -2 + rand() * 4);
     return {
       kind,
       id: kind === "app" ? APPS[i] : undefined,
       radius: kind === "app" ? 0.66 : 0.6,
-      delay: 0.25 + n * 0.11,
+      delay: 0.25 + n * 0.14,
       from,
       p: from.clone(),
       v: new THREE.Vector3(),
       rot: new THREE.Euler((rand() - 0.5) * 2, (rand() - 0.5) * 2, (rand() - 0.5) * 2),
-      spin: new THREE.Vector3((rand() - 0.5) * 3, (rand() - 0.5) * 3, (rand() - 0.5) * 2),
+      spin: new THREE.Vector3((rand() - 0.5) * 1.2, (rand() - 0.5) * 1.2, (rand() - 0.5) * 0.8),
     };
   });
 }
@@ -72,8 +74,12 @@ function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vecto
   const d = new THREE.Vector3();
   for (const b of bodies) {
     if (time < b.delay) continue;
-    b.v.addScaledVector(b.p, -dt * (time < b.delay + 1 ? 5 : 3.2));
-    b.v.z += -b.p.z * dt * 2;
+    b.v.addScaledVector(b.p, -dt * (time < b.delay + 1.5 ? 2.4 : 1.6));
+    b.v.z += -b.p.z * dt;
+    // A slow drift so the resting clump breathes.
+    const phase = b.delay * 7;
+    b.v.x += Math.sin(time * 0.5 + phase) * dt * 0.12;
+    b.v.y += Math.cos(time * 0.4 + phase) * dt * 0.12;
   }
   for (let i = 0; i < bodies.length; i++) {
     const a = bodies[i];
@@ -86,32 +92,33 @@ function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vecto
       const min = a.radius + b.radius;
       if (dist >= min) continue;
       d.divideScalar(dist);
-      const push = (min - dist) / 2;
+      // Ease overlaps apart over a few frames instead of snapping, so contacts stay soft.
+      const push = (min - dist) * 0.3;
       a.p.addScaledVector(d, -push);
       b.p.addScaledVector(d, push);
       const along = b.v.dot(d) - a.v.dot(d);
       if (along < 0) {
-        a.v.addScaledVector(d, along * 0.5);
-        b.v.addScaledVector(d, -along * 0.5);
-        a.spin.z += along * 0.6;
-        b.spin.x -= along * 0.6;
+        a.v.addScaledVector(d, along * 0.3);
+        b.v.addScaledVector(d, -along * 0.3);
+        a.spin.z += along * 0.15;
+        b.spin.x -= along * 0.15;
       }
     }
     if (pointer) {
       d.subVectors(a.p, pointer);
       d.z *= 0.4;
       const dist = d.length() || 0.0001;
-      const min = a.radius + 0.85;
+      // The pointer only nudges: tiles lean away a little and drift back.
+      const min = a.radius + 0.55;
       if (dist < min) {
         d.divideScalar(dist);
-        a.p.addScaledVector(d, (min - dist) * 0.35);
-        a.v.addScaledVector(d, (min - dist) * 4);
-        a.spin.y += d.x * 2;
-        a.spin.x -= d.y * 2;
+        a.v.addScaledVector(d, (min - dist) * dt * 14);
+        a.spin.y += d.x * dt * 1.5;
+        a.spin.x -= d.y * dt * 1.5;
       }
     }
   }
-  const damp = Math.exp(-dt * 2.6);
+  const damp = Math.exp(-dt * 3.4);
   for (const b of bodies) {
     if (time < b.delay) continue;
     b.v.multiplyScalar(damp);
@@ -120,7 +127,7 @@ function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vecto
     b.rot.y += b.spin.y * dt;
     b.rot.z += b.spin.z * dt;
     // Spin settles and tiles turn back toward the viewer, so the app icons stay readable.
-    b.spin.multiplyScalar(Math.exp(-dt * 1.2));
+    b.spin.multiplyScalar(Math.exp(-dt * 1.6));
     const settle = 1 - Math.exp(-dt * (b.kind === "app" ? 1.4 : 0.3));
     b.rot.x += (wrap(b.rot.x) * 0.25 - b.rot.x) * settle;
     b.rot.y += (wrap(b.rot.y) * 0.35 - b.rot.y) * settle;
@@ -206,7 +213,18 @@ function useTileGeometry() {
   }, []);
 }
 
-function Clump({ compact, still, textures }: { compact: boolean; still: boolean; textures: Partial<Record<AppId, THREE.Texture>> }) {
+function Clump({
+  compact,
+  still,
+  textures,
+  anchor,
+}: {
+  compact: boolean;
+  still: boolean;
+  textures: Partial<Record<AppId, THREE.Texture>>;
+  /** The page box the clump rests in; tiles may still fly anywhere on the canvas. */
+  anchor: HTMLElement | null;
+}) {
   const bodies = useMemo(() => {
     const list = makeBodies(compact ? 3 : ICE_COUNT);
     if (still) {
@@ -223,6 +241,7 @@ function Clump({ compact, still, textures }: { compact: boolean; still: boolean;
   const time = useRef(still ? 10 : 0);
   const client = useRef<{ x: number; y: number } | null>(null);
   const pointer = useMemo(() => new THREE.Vector3(), []);
+  const stage = useRef<THREE.Group>(null);
   const tile = useTileGeometry();
   const { gl } = useThree();
 
@@ -240,15 +259,26 @@ function Clump({ compact, still, textures }: { compact: boolean; still: boolean;
   useFrame(({ viewport, camera }, delta) => {
     const dt = Math.min(delta, MAX_STEP);
     time.current += dt;
-    // Pointer in world units on the z = 0 plane; ignored once it is well outside the canvas.
+    const rect = gl.domElement.getBoundingClientRect();
+    const vp = viewport.getCurrentViewport(camera, [0, 0, 0]);
+    const unit = vp.width / rect.width;
+    // Center and scale the clump on the anchor box, wherever the layout puts it.
+    if (stage.current && anchor) {
+      const box = anchor.getBoundingClientRect();
+      stage.current.position.set(
+        (box.left + box.width / 2 - rect.left - rect.width / 2) * unit,
+        -(box.top + box.height / 2 - rect.top - rect.height / 2) * unit,
+        0,
+      );
+      stage.current.scale.setScalar((box.width * unit) / CLUMP_SIZE);
+    }
+    // Pointer on the z = 0 plane, in the clump's own units.
     let push: THREE.Vector3 | null = null;
-    if (client.current && !still) {
-      const rect = gl.domElement.getBoundingClientRect();
-      const nx = ((client.current.x - rect.left) / rect.width) * 2 - 1;
-      const ny = -((client.current.y - rect.top) / rect.height) * 2 + 1;
-      if (Math.abs(nx) < 1.2 && Math.abs(ny) < 1.2) {
-        const vp = viewport.getCurrentViewport(camera, [0, 0, 0]);
-        push = pointer.set((nx * vp.width) / 2, (ny * vp.height) / 2, 0);
+    if (client.current && !still && stage.current) {
+      const x = (client.current.x - rect.left - rect.width / 2) * unit;
+      const y = -(client.current.y - rect.top - rect.height / 2) * unit;
+      if (Math.abs(x) < vp.width && Math.abs(y) < vp.height) {
+        push = pointer.set(x, y, 0).sub(stage.current.position).divideScalar(stage.current.scale.x);
       }
     }
     simulate(bodies, time.current, dt, push);
@@ -275,7 +305,7 @@ function Clump({ compact, still, textures }: { compact: boolean; still: boolean;
   });
 
   return (
-    <>
+    <group ref={stage}>
       {bodies.map((b, i) =>
         b.kind === "app" && b.id ? (
           <group
@@ -327,13 +357,14 @@ function Clump({ compact, still, textures }: { compact: boolean; still: boolean;
           />
         )}
       </instancedMesh>
-    </>
+    </group>
   );
 }
 
 export default function AppMagnet() {
   const hidden = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const textures = useIconTextures(hidden);
   const [active, setActive] = useState(true);
   const [env, setEnv] = useState<{ compact: boolean; still: boolean } | null>(null);
@@ -343,6 +374,7 @@ export default function AppMagnet() {
       compact: window.matchMedia("(max-width: 1023px)").matches,
       still: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     });
+    setAnchor(document.querySelector<HTMLElement>("[data-magnet-anchor]"));
     // Render only while the hero is on screen.
     const observer = new IntersectionObserver(([entry]) => setActive(entry.isIntersecting));
     if (box.current) observer.observe(box.current);
@@ -350,7 +382,7 @@ export default function AppMagnet() {
   }, []);
 
   return (
-    <div ref={box} className="absolute -inset-[12%]" aria-hidden>
+    <div ref={box} className="pointer-events-none absolute inset-0" aria-hidden>
       <div ref={hidden} className="hidden">
         {APPS.map((id) => (
           <span key={id} data-icon={id}>
@@ -362,6 +394,7 @@ export default function AppMagnet() {
         <Canvas
           style={{ pointerEvents: "none" }}
           camera={{ position: [0, 0, 11], fov: 32 }}
+          resize={{ scroll: false }}
           dpr={[1, env.compact ? 1.5 : 1.75]}
           frameloop={active ? "always" : "never"}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
@@ -374,7 +407,7 @@ export default function AppMagnet() {
             <Lightformer form="rect" intensity={2.5} color="#7c5cff" position={[5, -1, 2]} rotation-y={-Math.PI / 2} scale={[6, 4, 1]} />
             <Lightformer form="ring" intensity={2} color="#38bdf8" position={[0, -3, -4]} scale={4} />
           </Environment>
-          <Clump compact={env.compact} still={env.still} textures={textures} />
+          <Clump compact={env.compact} still={env.still} textures={textures} anchor={anchor} />
         </Canvas>
       )}
     </div>
