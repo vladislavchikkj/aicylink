@@ -33,14 +33,22 @@ function ProductRow({ product }: { product: Product }) {
 
 export function Products() {
   return (
-    <section id="products" className="section-y scroll-mt-16 bg-surface">
+    <section id="products" className="section-y scroll-mt-16">
       <Container>
+        <div className="relative">
+        {/* The crystal glides here while this section is centered (lg+) */}
+        <div
+          data-crystal-anchor
+          className="pointer-events-none absolute right-[3%] top-1/2 hidden aspect-square w-[min(340px,28vw)] -translate-y-1/2 lg:block"
+          aria-hidden
+        />
         <SectionHeading
           index="01"
           eyebrow="Products"
           title="A growing family of AI apps."
           text="We design, build and run every app ourselves. Each one solves one everyday problem — simply and beautifully."
         />
+        </div>
 
         <Stagger className="mt-12 grid gap-6 lg:grid-cols-3" style={{ perspective: 1200 }} stagger={0.15}>
           {categories.map((c) => (

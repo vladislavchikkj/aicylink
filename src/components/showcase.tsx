@@ -51,11 +51,20 @@ export function ProductShowcase() {
       </Reveal>
 
       <div className="mt-24">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <SectionHeading index="02" eyebrow="In the lab" title="What we're building next." />
-          <Reveal>
-            <p className="max-w-sm text-muted">Early concepts of apps in development. Join a waitlist on any app page.</p>
-          </Reveal>
+        {/* Mirrored header: the crystal breaks into linked shards in the left column (lg+) */}
+        <div className="grid items-center gap-6 lg:min-h-[360px] lg:grid-cols-2">
+          <div
+            data-crystal-anchor
+            data-crystal-shatter="1"
+            className="pointer-events-none hidden aspect-square w-[min(400px,30vw)] justify-self-center lg:block"
+            aria-hidden
+          />
+          <div>
+            <SectionHeading index="02" eyebrow="In the lab" title="What we're building next." />
+            <Reveal>
+              <p className="mt-4 max-w-sm text-muted">Early concepts of apps in development. Join a waitlist on any app page.</p>
+            </Reveal>
+          </div>
         </div>
 
         {/* Swipeable row on phones, grid from tablets up */}

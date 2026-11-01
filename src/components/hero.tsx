@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "motion/react";
-import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { principles, site } from "@/content/site";
 import { EASE_OUT, Stagger, StaggerItem, WordsReveal } from "./motion/reveal";
@@ -19,15 +18,6 @@ function FadeIn({ children, delay }: { children: React.ReactNode; delay: number 
   );
 }
 
-// three.js loads after the page is interactive; a soft glow holds the space meanwhile.
-const CrystalScene = dynamic(() => import("./crystal-scene"), {
-  ssr: false,
-  loading: () => (
-    <div className="relative mx-auto aspect-square w-full max-w-[600px] lg:max-w-[min(600px,calc(100svh-18.5rem))]">
-      <div className="ice-glow absolute inset-[-8%] rounded-full" />
-    </div>
-  ),
-});
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
@@ -63,14 +53,12 @@ export function Hero() {
             </FadeIn>
           </motion.div>
 
+          {/* Where the crystal rests on the first screen (drawn by <CrystalStage>, which follows this box) */}
           <motion.div style={{ y: sceneY, scale: sceneScale }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.85, rotate: -8 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ duration: 1.6, delay: 0.2, ease: EASE_OUT }}
-            >
-              <CrystalScene />
-            </motion.div>
+            <div
+              data-crystal-anchor
+              className="relative mx-auto aspect-square w-full max-w-[600px] lg:max-w-[min(600px,calc(100svh-15rem))] lg:cursor-grab lg:active:cursor-grabbing"
+            />
           </motion.div>
         </Container>
       </div>
@@ -78,9 +66,9 @@ export function Hero() {
       <div className="relative z-10 bg-ink text-white">
         <Stagger className="mx-auto grid w-full max-w-7xl grid-cols-2 px-4 sm:px-6 lg:grid-cols-4 lg:px-8" stagger={0.1}>
           {principles.map((p) => (
-            <StaggerItem key={p.label} className="border-white/10 py-8 pr-4 lg:border-l lg:pl-6 lg:first:border-l-0 lg:first:pl-0">
-              <p className="text-lg font-bold tracking-tight">{p.label}</p>
-              <p className="mt-1 text-sm text-white/60">{p.text}</p>
+            <StaggerItem key={p.label} className="border-white/10 py-4 pr-4 lg:border-l lg:py-5 lg:pl-6 lg:first:border-l-0 lg:first:pl-0">
+              <p className="text-sm font-semibold tracking-tight">{p.label}</p>
+              <p className="mt-0.5 text-xs text-white/55">{p.text}</p>
             </StaggerItem>
           ))}
         </Stagger>

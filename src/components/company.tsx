@@ -10,12 +10,20 @@ export function Company() {
   return (
     <section id="company" className="section-y scroll-mt-16">
       <Container>
+        <div className="relative">
+        {/* The crystal glides here while this section is centered (lg+) */}
+        <div
+          data-crystal-anchor
+          className="pointer-events-none absolute right-[3%] top-1/2 hidden aspect-square w-[min(300px,28vw)] -translate-y-1/2 lg:block"
+          aria-hidden
+        />
         <SectionHeading
           index="03"
           eyebrow="Company"
           title="One studio. Many ways to work together."
           text="AicyLink is a home for simple, useful AI apps: one team, one playbook and one standard of quality across everything we ship."
         />
+        </div>
 
         <Stagger className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3" stagger={0.14}>
           {audiences.map((a, i) => (
