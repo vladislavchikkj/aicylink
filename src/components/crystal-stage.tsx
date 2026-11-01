@@ -5,6 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry.js";
 import { allApps, appHref } from "@/content/apps";
 import type { AppId } from "@/content/site";
 import { AppIcon, appTheme } from "./app-icon";
@@ -193,42 +194,43 @@ function Ring({
   );
 }
 
-// Hexagonal ice crystal: a six-sided prism with stepped, two-facet points and a faint waist ridge.
-const PROFILE = [
-  [0, -1],
-  [0.58, -0.8],
-  [1, -0.52],
-  [0.93, -0.04],
-  [1, 0.48],
-  [0.62, 0.78],
-  [0, 1],
+// AicyLink's own ice shard: a lopsided gem of large flat facets with a chiselled, two-point top.
+const GEM: [number, number, number][] = [
+  [0.18, 1.55, 0.08],
+  [-0.24, 1.18, -0.1],
+  [0.72, 0.62, 0.22],
+  [0.48, 0.8, -0.48],
+  [-0.62, 0.68, 0.38],
+  [-0.56, 0.42, -0.5],
+  [0.06, 0.55, 0.72],
+  [0.82, -0.3, -0.05],
+  [-0.78, -0.22, 0.05],
+  [0.25, -0.15, 0.78],
+  [-0.15, -0.35, -0.75],
+  [0.45, -1.05, 0.35],
+  [-0.4, -1.0, -0.3],
+  [0.05, -1.55, -0.05],
 ];
 
-/** Stable pseudo-random value in [-1, 1] for a vertex position (coincident vertices get the same value). */
+/** Stable pseudo-random value in [-1, 1]. */
 function jitter(x: number, y: number, z: number, seed: number) {
-  const r = (v: number) => Math.round(v * 1000) / 1000;
-  const s = Math.sin(r(x) * 127.1 + r(y) * 311.7 + r(z) * 74.7 + seed * 19.3) * 43758.5453;
+  const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + seed * 19.3) * 43758.5453;
   return (s - Math.floor(s)) * 2 - 1;
 }
 
-function useCrystalGeometry(height: number, width: number) {
+/** The gem at a given size; any seed other than 0 gives a sibling shard with its own facets. */
+function useGemGeometry(size: number, seed = 0) {
   return useMemo(() => {
-    const h = height / 2;
-    const geometry = new THREE.LatheGeometry(
-      PROFILE.map(([x, y]) => new THREE.Vector2(x * width, y * h)),
-      6,
-    );
-    // Real ice is never perfectly regular: nudge every corner a little so each facet catches light differently.
-    const pos = geometry.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const z = pos.getZ(i);
-      if (Math.abs(x) < 1e-4 && Math.abs(z) < 1e-4) continue;
-      pos.setXYZ(i, x * (1 + jitter(x, y, z, 1) * 0.07), y + jitter(x, y, z, 2) * 0.035 * h, z * (1 + jitter(x, y, z, 3) * 0.07));
-    }
-    return geometry.toNonIndexed();
-  }, [height, width]);
+    const points = GEM.map(([x, y, z]) => {
+      const n = seed ? 0.16 : 0;
+      return new THREE.Vector3(
+        (x + jitter(x, y, z, seed) * n) * size,
+        (y + jitter(x, y, z, seed + 1) * n) * size,
+        (z + jitter(x, y, z, seed + 2) * n) * size,
+      );
+    });
+    return new ConvexGeometry(points);
+  }, [size, seed]);
 }
 
 /** Radial gradient sprite: glow, flash and glint textures share this. */
@@ -273,22 +275,14 @@ const backOut = (t: number) => {
   return t <= 0 ? 0 : 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2;
 };
 
-// Glints that twinkle on the crystal's tips and corners (main crystal local space).
-const GLINTS: { at: [number, number, number]; phase: number; size: number }[] = [
-  { at: [0, 1.58, 0], phase: 0, size: 0.55 },
-  { at: [0, -1.58, 0], phase: 2.1, size: 0.4 },
-  { at: [0.8, 0.76, 0.1], phase: 3.7, size: 0.32 },
-  { at: [-0.45, 0.72, 0.68], phase: 1.2, size: 0.28 },
-  { at: [0.42, -0.78, 0.7], phase: 4.6, size: 0.3 },
-];
-
-const DUST_COUNT = 140;
+// One glint that now and then sparkles on the crystal's tip, like the sparkle in the logo.
+const GLINT_AT: [number, number, number] = [GEM[0][0], GEM[0][1], GEM[0][2]];
 
 // What the ice refracts: a pale sky instead of the transparent (black) canvas.
 const ICE_BACKGROUND = new THREE.Color("#f1efff");
 
-// "Aicy Link": the crystal is a cluster of ice shards. Assembled it reads as one crystal; as
-// `shatter` goes to 1 the shards drift apart and light links appear between them.
+// "Aicy Link": the crystal holds a cluster of ice shards. Whole, they hide inside it; as
+// `shatter` goes to 1 they break out, drift apart and light links appear between them.
 type Shard = {
   size: "m" | "s";
   at: [number, number, number];
@@ -333,13 +327,9 @@ function Crystal({
   /** DOM pill that names the hovered app; positioned here every frame. */
   label: React.RefObject<HTMLSpanElement | null>;
 }) {
-  const main = useCrystalGeometry(3.1, 0.82);
-  const small = useCrystalGeometry(1.6, 0.42);
-  const medium = useCrystalGeometry(2.2, 0.55);
-  const phantom = useCrystalGeometry(2.1, 0.42);
-  const edges = useMemo(() => new THREE.EdgesGeometry(main, 12), [main]);
-  const smallEdges = useMemo(() => new THREE.EdgesGeometry(small, 12), [small]);
-  const mediumEdges = useMemo(() => new THREE.EdgesGeometry(medium, 12), [medium]);
+  const main = useGemGeometry(1);
+  const small = useGemGeometry(0.5, 7);
+  const medium = useGemGeometry(0.68, 3);
   const glowTexture = useRadialTexture([
     [0, "rgba(125,211,252,0.55)"],
     [0.4, "rgba(167,139,250,0.22)"],
@@ -358,16 +348,6 @@ function Crystal({
     ],
     true,
   );
-  const dust = useMemo(() => {
-    const positions = new Float32Array(DUST_COUNT * 3);
-    for (let i = 0; i < DUST_COUNT; i++) {
-      const r = 1.5 + Math.random() * 1.6;
-      const a = Math.random() * Math.PI * 2;
-      const y = (Math.random() - 0.5) * 3.4;
-      positions.set([Math.cos(a) * r, y, Math.sin(a) * r], i * 3);
-    }
-    return positions;
-  }, []);
 
   const spin = useRef<THREE.Group>(null);
   const bob = useRef<THREE.Group>(null);
@@ -375,18 +355,15 @@ function Crystal({
   const shards = useRef<(THREE.Mesh | null)[]>([]);
   const icons = useRef<(THREE.Group | null)[]>([]);
   const pulses = useRef<(THREE.Mesh | null)[]>([]);
-  const glints = useRef<(THREE.Group | null)[]>([]);
+  const glint = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState<number | null>(null);
   const interactive = useRef(false);
   const core = useRef<THREE.Mesh>(null);
   const coreLight = useRef<THREE.PointLight>(null);
   const sweep = useRef<THREE.PointLight>(null);
   const links = useRef<THREE.LineSegments>(null);
-  const edgeMaterial = useRef<THREE.LineBasicMaterial>(null);
   const glow = useRef<THREE.MeshBasicMaterial>(null);
   const flash = useRef<THREE.Mesh>(null);
-  const wave = useRef<THREE.Mesh>(null);
-  const dustPoints = useRef<THREE.Points>(null);
   const time = useRef(0);
   const linkPositions = useMemo(() => new Float32Array(LINKS.length * 6), []);
   const projected = useMemo(() => new THREE.Vector3(), []);
@@ -430,7 +407,8 @@ function Crystal({
       mesh.rotation.set(shard.rot[0] + k * t * 0.15, shard.rot[1] + k * t * 0.2, shard.rot[2]);
       // Ice forms at the end of each ray, one shard after another.
       const grow = backOut(phase(T, INTRO.shards + i * 0.07, 0.45));
-      mesh.scale.setScalar(Math.max(shard.scale * (1 + k * 0.35) * grow, 0.0001));
+      // Whole, the crystal is a single clean gem: the shards only exist while it is broken apart.
+      mesh.scale.setScalar(Math.max(shard.scale * k * 1.35 * grow, 0.0001));
       centers.push(mesh.position);
       // App icon floating in front of the shard, larger when hovered.
       const icon = icons.current[i];
@@ -449,14 +427,12 @@ function Crystal({
       }
     });
 
-    // Glints twinkle on the tips while the crystal is whole.
-    GLINTS.forEach((g, i) => {
-      const glint = glints.current[i];
-      if (!glint) return;
-      const twinkle = Math.max(0, Math.sin(t * 1.1 + g.phase)) ** 8;
-      glint.scale.setScalar(Math.max(g.size * twinkle * (1 - k) * settled, 0.0001));
-      glint.rotation.z = t * 0.4 + g.phase;
-    });
+    // The tip sparkles now and then while the crystal is whole.
+    if (glint.current) {
+      const twinkle = Math.max(0, Math.sin(t * 0.8)) ** 10;
+      glint.current.scale.setScalar(Math.max(0.5 * twinkle * (1 - k) * settled, 0.0001));
+      glint.current.rotation.z = t * 0.3;
+    }
 
     // Name pill under the hovered app icon.
     const pill = label.current;
@@ -474,32 +450,19 @@ function Crystal({
       }
     }
 
-    // The core breathes while the network forms, then rests inside the ice.
-    const breathe = 1 + Math.sin(T * 7) * 0.12 * (1 - settled);
-    if (core.current) core.current.scale.setScalar(Math.max(coreIn * (1 - k * 0.6) * breathe * (1 + (1 - mainIn) * 0.4), 0.0001));
-    if (coreLight.current) coreLight.current.intensity = 6 * coreIn + (1 - flashT) * flashT * 4 * 40;
+    if (core.current) core.current.scale.setScalar(Math.max(coreIn * (1 - k * 0.6) * (1 + (1 - mainIn) * 0.4), 0.0001));
+    if (coreLight.current) coreLight.current.intensity = 6 * coreIn + Math.sin(flashT * Math.PI) * 60;
     if (sweep.current) {
       // A light circling the crystal makes its facets flash in turn.
       sweep.current.position.set(Math.cos(t * 0.7) * 3, Math.sin(t * 0.45) * 1.6, Math.sin(t * 0.7) * 3);
       sweep.current.intensity = 22 * mainIn;
     }
-    if (edgeMaterial.current) edgeMaterial.current.opacity = 0.5 * mainIn * (1 - k * 0.7);
-    if (glow.current) glow.current.opacity = mainIn * (1 - k * 0.6) * (0.85 + Math.sin(t * 1.2) * 0.15);
+    if (glow.current) glow.current.opacity = 0.6 * mainIn * (1 - k * 0.6);
     if (flash.current) {
       const f = flashT > 0 && flashT < 1 ? Math.sin(flashT * Math.PI) : 0;
       flash.current.scale.setScalar(Math.max(1.5 + flashT * 3, 0.0001));
       (flash.current.material as THREE.MeshBasicMaterial).opacity = f;
       flash.current.visible = f > 0.01;
-    }
-    if (wave.current) {
-      wave.current.scale.setScalar(0.6 + ease(flashT) * 4.5);
-      (wave.current.material as THREE.MeshBasicMaterial).opacity = flashT > 0 && flashT < 1 ? (1 - flashT) * 0.7 : 0;
-      wave.current.visible = flashT > 0 && flashT < 1;
-    }
-    if (dustPoints.current) {
-      dustPoints.current.rotation.y = t * 0.05;
-      dustPoints.current.position.y = Math.sin(t * 0.3) * 0.1;
-      (dustPoints.current.material as THREE.PointsMaterial).opacity = 0.8 * mainIn * (1 - k * 0.5);
     }
 
     if (links.current && centers.length === SHARDS.length + 1) {
@@ -541,7 +504,7 @@ function Crystal({
             temporalDistortion={0}
             clearcoat={1}
             clearcoatRoughness={0.05}
-            iridescence={0.5}
+            iridescence={0.3}
             iridescenceIOR={1.31}
             color="#e0f2fe"
             attenuationColor="#7dd3fc"
@@ -550,38 +513,14 @@ function Crystal({
             backsideThickness={0.6}
             background={ICE_BACKGROUND}
           />
-          {/* Thin bright edges where the facets meet */}
-          <lineSegments geometry={edges}>
-            <lineBasicMaterial ref={edgeMaterial} color="#f0f9ff" transparent opacity={0} toneMapped={false} />
-          </lineSegments>
-          {/* A phantom crystal frozen inside, seen through the ice */}
-          <mesh geometry={phantom} rotation={[0, Math.PI / 6, 0.08]}>
-            <meshPhysicalMaterial
-              flatShading
-              color="#bae6fd"
-              emissive="#38bdf8"
-              emissiveIntensity={0.35}
-              roughness={0.15}
-              transparent
-              opacity={0.35}
-              depthWrite={false}
-            />
-          </mesh>
-          {GLINTS.map((g, i) => (
-            <Billboard key={i} position={g.at}>
-              <group
-                ref={(el) => {
-                  glints.current[i] = el;
-                }}
-                scale={0.0001}
-              >
-                <mesh>
-                  <planeGeometry />
-                  <meshBasicMaterial map={glintTexture} transparent depthWrite={false} toneMapped={false} />
-                </mesh>
-              </group>
-            </Billboard>
-          ))}
+          <Billboard position={GLINT_AT}>
+            <group ref={glint} scale={0.0001}>
+              <mesh>
+                <planeGeometry />
+                <meshBasicMaterial map={glintTexture} transparent depthWrite={false} toneMapped={false} />
+              </mesh>
+            </group>
+          </Billboard>
         </mesh>
 
         {/* Shards use a light glass look; one transmission pass for the main crystal keeps it fast. */}
@@ -612,9 +551,6 @@ function Crystal({
               opacity={0.42}
               depthWrite={false}
             />
-            <lineSegments geometry={shard.size === "m" ? mediumEdges : smallEdges}>
-              <lineBasicMaterial color="#38bdf8" transparent opacity={0.45} toneMapped={false} />
-            </lineSegments>
           </mesh>
         ))}
 
@@ -672,7 +608,7 @@ function Crystal({
 
         {/* Glowing core seen through the ice */}
         <mesh ref={core} scale={0.0001}>
-          <icosahedronGeometry args={[0.32, 1]} />
+          <icosahedronGeometry args={[0.22, 1]} />
           <meshBasicMaterial color="#38bdf8" toneMapped={false} />
         </mesh>
         <pointLight ref={coreLight} color="#38bdf8" intensity={0} distance={4} />
@@ -680,23 +616,12 @@ function Crystal({
 
       <pointLight ref={sweep} color="#ffffff" intensity={0} distance={8} />
 
-      {/* Ice dust drifting around the crystal */}
-      <points ref={dustPoints}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[dust, 3]} />
-        </bufferGeometry>
-        <pointsMaterial map={flashTexture} color="#7dd3fc" size={0.09} sizeAttenuation transparent opacity={0} depthWrite={false} toneMapped={false} />
-      </points>
 
-      {/* The moment the shards lock together: a flash and a ring of light */}
+      {/* The moment the shards lock together: a soft flash */}
       <Billboard>
         <mesh ref={flash} visible={false}>
           <planeGeometry />
           <meshBasicMaterial map={flashTexture} transparent depthWrite={false} opacity={0} toneMapped={false} />
-        </mesh>
-        <mesh ref={wave} visible={false}>
-          <ringGeometry args={[0.96, 1, 96]} />
-          <meshBasicMaterial color="#38bdf8" transparent depthWrite={false} opacity={0} toneMapped={false} />
         </mesh>
       </Billboard>
     </group>
