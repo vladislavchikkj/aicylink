@@ -29,6 +29,8 @@ export function Company() {
           {audiences.map((a, i) => (
             <StaggerItem key={a.tag} from={directions[i % 3]} className="bg-white">
               <Spotlight className="flex h-full flex-col p-8">
+                {/* Top edge the crystal's light line plugs into */}
+                <span data-crystal-link className="absolute inset-x-0 top-0 h-px" aria-hidden />
                 <span className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-widest text-subtle">
                   <span className="size-2 rounded-full" style={{ background: a.color }} />
                   {a.tag}

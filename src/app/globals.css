@@ -181,6 +181,24 @@ body {
   }
 }
 
+/* Lines from the crystal to the Company cards: a flowing dash */
+.crystal-link {
+  stroke-dasharray: 6 8;
+  animation: crystal-link-flow 1.2s linear infinite;
+}
+
+@keyframes crystal-link-flow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crystal-link {
+    animation: none;
+  }
+}
+
 /* Vertical rhythm for home sections: tighter on short laptop screens, roomier on tall ones */
 .section-y {
   padding-block: clamp(4.5rem, 11svh, 8rem);

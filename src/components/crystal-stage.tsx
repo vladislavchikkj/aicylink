@@ -2,8 +2,10 @@
 
 import { Billboard, Environment, Lightformer, MeshTransmissionMaterial, PresentationControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { allApps, appHref } from "@/content/apps";
 import type { AppId } from "@/content/site";
 import { AppIcon, appTheme } from "./app-icon";
 
@@ -197,13 +199,33 @@ const SHARDS: Shard[] = [
   { size: "m", at: [-0.66, -0.35, 0.3], rot: [0.2, -0.4, 0.95], scale: 0.45, apart: [-2.0, 1.7, 0.5] },
 ];
 
+// In the lab the shards become the apps in development, linked to the core.
+const SHARD_APPS: AppId[] = ["snap", "stars", "glow", "move", "learn", "dreams"];
+const appName = (id: AppId) => allApps.find((a) => a.id === id)?.name ?? id;
+
 // Links between shard centers (index 0 is the main crystal).
 const LINKS: [number, number][] = [
   [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6],
   [1, 5], [5, 3], [3, 4], [4, 2], [2, 6], [6, 1],
 ];
 
-function Crystal({ mobile, shatter }: { mobile: boolean; shatter: React.RefObject<number> }) {
+function Crystal({
+  mobile,
+  shatter,
+  burst,
+  textures,
+  onOpen,
+  label,
+}: {
+  mobile: boolean;
+  shatter: React.RefObject<number>;
+  /** Extra spread for the opening fly-in (0 = none). */
+  burst: React.RefObject<number>;
+  textures: Partial<Record<AppId, THREE.Texture>>;
+  onOpen: (id: AppId) => void;
+  /** DOM pill that names the hovered app; positioned here every frame. */
+  label: React.RefObject<HTMLSpanElement | null>;
+}) {
   const main = useCrystalGeometry(3.1, 0.82);
   const small = useCrystalGeometry(1.6, 0.42);
   const medium = useCrystalGeometry(2.2, 0.55);
@@ -211,17 +233,24 @@ function Crystal({ mobile, shatter }: { mobile: boolean; shatter: React.RefObjec
   const bob = useRef<THREE.Group>(null);
   const mainMesh = useRef<THREE.Mesh>(null);
   const shards = useRef<(THREE.Mesh | null)[]>([]);
-  const nodes = useRef<(THREE.Mesh | null)[]>([]);
+  const icons = useRef<(THREE.Group | null)[]>([]);
+  const pulses = useRef<(THREE.Mesh | null)[]>([]);
+  const [hovered, setHovered] = useState<number | null>(null);
+  const interactive = useRef(false);
   const core = useRef<THREE.Mesh>(null);
   const links = useRef<THREE.LineSegments>(null);
   const time = useRef(0);
   const linkPositions = useMemo(() => new Float32Array(LINKS.length * 6), []);
+  const projected = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame((_, delta) => {
+  useFrame(({ camera, size }, delta) => {
     const dt = step(delta);
     const t = (time.current += dt);
     const k = ease(Math.min(Math.max(shatter.current ?? 0, 0), 1));
-    if (spin.current) spin.current.rotation.y += dt * (0.12 + k * 0.1);
+    const spread = 1 + (burst.current ?? 0) * 2.2;
+    interactive.current = k > 0.85;
+    // Nearly still as a linked network (so app icons are easy to point at), frozen while one is hovered.
+    if (spin.current && hovered === null) spin.current.rotation.y += dt * lerp(0.12, 0.025, k);
     if (bob.current) {
       bob.current.position.y = Math.sin(t * 0.9) * 0.05;
       bob.current.rotation.z = Math.sin(t * 0.6) * 0.04;
@@ -238,21 +267,47 @@ function Crystal({ mobile, shatter }: { mobile: boolean; shatter: React.RefObjec
     SHARDS.forEach((shard, i) => {
       const mesh = shards.current[i];
       if (!mesh) return;
-      const drift = Math.sin(t * 0.7 + i) * 0.15 * k;
+      const drift = Math.sin(t * 0.7 + i) * 0.08 * k;
       mesh.position.set(
-        lerp(shard.at[0], shard.apart[0], k),
-        lerp(shard.at[1], shard.apart[1], k) + drift,
-        lerp(shard.at[2], shard.apart[2], k),
+        lerp(shard.at[0], shard.apart[0] * spread, k),
+        lerp(shard.at[1], shard.apart[1] * spread, k) + drift,
+        lerp(shard.at[2], shard.apart[2] * spread, k),
       );
-      mesh.rotation.set(shard.rot[0] + k * t * 0.3, shard.rot[1] + k * t * 0.4, shard.rot[2]);
+      mesh.rotation.set(shard.rot[0] + k * t * 0.15, shard.rot[1] + k * t * 0.2, shard.rot[2]);
       mesh.scale.setScalar(shard.scale * (1 + k * 0.35));
       centers.push(mesh.position);
-      const node = nodes.current[i];
-      if (node) {
-        node.position.copy(mesh.position);
-        node.scale.setScalar(k);
+      // App icon floating in front of the shard, larger when hovered.
+      const icon = icons.current[i];
+      if (icon) {
+        icon.position.copy(mesh.position);
+        icon.position.z += 0.35;
+        const target = Math.max(k * 1.4 - 0.4, 0) * (hovered === i ? 1.25 : 1);
+        icon.scale.setScalar(THREE.MathUtils.damp(icon.scale.x, target, 10, dt));
+      }
+      // A pulse of light running from the core out to the shard.
+      const pulse = pulses.current[i];
+      if (pulse && mainMesh.current) {
+        const f = (t * 0.45 + i / SHARDS.length) % 1;
+        pulse.position.lerpVectors(mainMesh.current.position, mesh.position, f);
+        pulse.scale.setScalar(k * (0.6 + Math.sin(f * Math.PI) * 0.6));
       }
     });
+
+    // Name pill under the hovered app icon.
+    const pill = label.current;
+    const hoveredIcon = hovered !== null ? icons.current[hovered] : null;
+    if (pill) {
+      if (hoveredIcon) {
+        hoveredIcon.getWorldPosition(projected).project(camera);
+        const x = (projected.x * 0.5 + 0.5) * size.width;
+        const y = (-projected.y * 0.5 + 0.5) * size.height;
+        pill.textContent = `${appName(SHARD_APPS[hovered!])} →`;
+        pill.style.transform = `translate(-50%, 0) translate(${x}px, ${y + 34}px)`;
+        pill.style.opacity = "1";
+      } else {
+        pill.style.opacity = "0";
+      }
+    }
 
     if (core.current) core.current.scale.setScalar(1 - k * 0.6);
     if (links.current && centers.length === SHARDS.length + 1) {
@@ -322,16 +377,48 @@ function Crystal({ mobile, shatter }: { mobile: boolean; shatter: React.RefObjec
           </mesh>
         ))}
 
-        {SHARDS.map((_, i) => (
-          <mesh
-            key={`node-${i}`}
-            ref={(m) => {
-              nodes.current[i] = m;
+        {SHARD_APPS.map((id, i) => (
+          <Billboard
+            key={id}
+            ref={(g) => {
+              icons.current[i] = g;
             }}
             scale={0}
           >
-            <sphereGeometry args={[0.07, 12, 12]} />
-            <meshBasicMaterial color="#38bdf8" toneMapped={false} />
+            <mesh
+              onPointerOver={(e) => {
+                if (!interactive.current) return;
+                e.stopPropagation();
+                setHovered(i);
+                document.body.style.cursor = "pointer";
+              }}
+              onPointerOut={() => {
+                setHovered(null);
+                document.body.style.cursor = "";
+              }}
+              onClick={(e) => {
+                if (!interactive.current) return;
+                e.stopPropagation();
+                document.body.style.cursor = "";
+                onOpen(id);
+              }}
+            >
+              <planeGeometry args={[0.62, 0.62]} />
+              <meshBasicMaterial map={textures[id]} transparent toneMapped={false} visible={Boolean(textures[id])} />
+            </mesh>
+          </Billboard>
+        ))}
+
+        {SHARDS.map((_, i) => (
+          <mesh
+            key={`pulse-${i}`}
+            ref={(m) => {
+              pulses.current[i] = m;
+            }}
+            scale={0}
+          >
+            <sphereGeometry args={[0.06, 12, 12]} />
+            <meshBasicMaterial color="#7dd3fc" toneMapped={false} />
           </mesh>
         ))}
 
@@ -442,34 +529,73 @@ function useHaloTexture() {
   }, []);
 }
 
+type CardLink = { path: SVGPathElement | null; dot: SVGCircleElement | null };
+
+/**
+ * Light lines from the crystal to every element marked data-crystal-link (the Company cards),
+ * shown while the crystal rests at the last anchor and each card is on screen.
+ */
+function updateCardLinks(links: CardLink[], from: { x: number; y: number }, weight: number) {
+  const cards = [...document.querySelectorAll<HTMLElement>("[data-crystal-link]")];
+  links.forEach((link, i) => {
+    const card = cards[i]?.getBoundingClientRect();
+    if (!link.path || !link.dot) return;
+    if (!card || weight <= 0.01) {
+      link.path.style.opacity = link.dot.style.opacity = "0";
+      return;
+    }
+    const x = card.left + card.width / 2;
+    const y = card.top;
+    const onScreen = Math.min(1, Math.max(0, (window.innerHeight - card.top) / 200));
+    link.path.setAttribute("d", `M${from.x} ${from.y} Q${x} ${from.y} ${x} ${y}`);
+    link.dot.setAttribute("cx", String(x));
+    link.dot.setAttribute("cy", String(y));
+    link.path.style.opacity = link.dot.style.opacity = String(weight * onScreen);
+  });
+}
+
 function Follow({
   children,
   orbits,
   shatter,
+  burst,
+  cardLinks,
 }: {
   children: React.ReactNode;
   orbits: React.RefObject<THREE.Group | null>;
   shatter: React.RefObject<number>;
+  burst: React.RefObject<number>;
+  cardLinks: React.RefObject<CardLink[]>;
 }) {
   const group = useRef<THREE.Group>(null);
   const turn = useRef<THREE.Group>(null);
   const halo = useRef<THREE.MeshBasicMaterial>(null);
   const haloTexture = useHaloTexture();
+  const clock = useRef(0);
 
-  useFrame(({ size, viewport }) => {
+  useFrame(({ size, viewport }, delta) => {
     const target = readTarget();
     if (!target || !group.current) return;
+    // Opening: shards fly in from far away and lock into the crystal.
+    clock.current += step(delta);
+    const intro = 1 - ease(Math.min(Math.max((clock.current - 0.15) / 1.7, 0), 1));
+    burst.current = intro;
     const unit = viewport.height / size.height;
     group.current.position.set((target.x - size.width / 2) * unit, -(target.y - size.height / 2) * unit, 0);
     group.current.scale.setScalar((target.size * unit) / SCENE_WORLD_SIZE);
     // A half turn per leg of the journey keeps it alive while it travels.
     if (turn.current) turn.current.rotation.y = target.progress * Math.PI;
     if (orbits.current) {
-      orbits.current.scale.setScalar(Math.max(target.hero, 0.001));
-      orbits.current.visible = target.hero > 0.01;
+      const orbit = target.hero * (1 - intro);
+      orbits.current.scale.setScalar(Math.max(orbit, 0.001));
+      orbits.current.visible = orbit > 0.01;
     }
     if (halo.current) halo.current.opacity = (1 - target.hero) * (1 - target.shatter * 0.5);
-    shatter.current = target.shatter;
+    shatter.current = Math.max(target.shatter, intro);
+
+    const anchors = document.querySelectorAll("[data-crystal-anchor]").length;
+    const atLast = Math.max(0, 1 - Math.abs(target.progress - (anchors - 1)) * 2.5);
+    updateCardLinks(cardLinks.current ?? [], target, atLast * (1 - target.shatter));
   });
 
   return (
@@ -488,6 +614,10 @@ export default function CrystalStage() {
   const aurora = useRef<HTMLDivElement>(null);
   const orbits = useRef<THREE.Group>(null);
   const shatter = useRef(0);
+  const burst = useRef(1);
+  const cardLinks = useRef<CardLink[]>([0, 1, 2].map(() => ({ path: null, dot: null })));
+  const router = useRouter();
+  const label = useRef<HTMLSpanElement>(null);
   const textures = useIconTextures(hidden);
   const geometry = useTileGeometry();
   const [active, setActive] = useState(true);
@@ -522,6 +652,36 @@ export default function CrystalStage() {
     <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden>
       <div ref={aurora} className="aurora absolute inset-0" />
 
+      <svg className="absolute inset-0 size-full" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <g key={i}>
+            <path
+              ref={(el) => {
+                cardLinks.current[i].path = el;
+              }}
+              className="crystal-link"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="1.5"
+              style={{ opacity: 0 }}
+            />
+            <circle
+              ref={(el) => {
+                cardLinks.current[i].dot = el;
+              }}
+              r="4"
+              fill="#38bdf8"
+              style={{ opacity: 0 }}
+            />
+          </g>
+        ))}
+      </svg>
+
+      <span
+        ref={label}
+        className="absolute left-0 top-0 z-10 whitespace-nowrap rounded-full bg-ink px-2.5 py-1 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200"
+      />
+
       <div ref={hidden} className="hidden">
         {ORDER.map((id) => (
           <span key={id} data-icon={id}>
@@ -550,7 +710,7 @@ export default function CrystalStage() {
           <Lightformer form="ring" intensity={2} color="#38bdf8" position={[0, -3, -4]} scale={4} />
         </Environment>
 
-        <Follow orbits={orbits} shatter={shatter}>
+        <Follow orbits={orbits} shatter={shatter} burst={burst} cardLinks={cardLinks}>
           <PresentationControls
             enabled={!env.touch}
             global={false}
@@ -562,7 +722,14 @@ export default function CrystalStage() {
             azimuth={[-Math.PI / 1.5, Math.PI / 1.5]}
           >
             <TiltRig still={env.still || env.touch}>
-              <Crystal mobile={env.mobile} shatter={shatter} />
+              <Crystal
+                mobile={env.mobile}
+                shatter={shatter}
+                burst={burst}
+                textures={textures}
+                label={label}
+                onOpen={(id) => router.push(appHref(id))}
+              />
               <group ref={orbits}>
                 {RINGS.map((ring) => (
                   <Ring key={ring.radius} {...ring} textures={textures} geometry={geometry} still={env.still} />
