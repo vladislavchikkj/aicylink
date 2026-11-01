@@ -5,8 +5,7 @@ import { AppIcon } from "./app-icon";
 import { StatusBadge } from "./status-badge";
 import { Stagger, StaggerItem } from "./motion/reveal";
 import { Spotlight } from "./motion/spotlight";
-import { ProductShowcase } from "./showcase";
-import { Container, SectionHeading } from "./ui";
+import { Chapter, Container, SectionHeading } from "./ui";
 
 function ProductRow({ product }: { product: Product }) {
   return (
@@ -33,22 +32,14 @@ function ProductRow({ product }: { product: Product }) {
 
 export function Products() {
   return (
-    <section id="products" className="section-y scroll-mt-16">
+    <Chapter id="products" label="Products">
       <Container>
-        <div className="relative">
-        {/* The crystal glides here while this section is centered (lg+) */}
-        <div
-          data-crystal-anchor
-          className="pointer-events-none absolute right-[3%] top-1/2 hidden aspect-square w-[min(340px,28vw)] -translate-y-1/2 lg:block"
-          aria-hidden
-        />
         <SectionHeading
           index="01"
           eyebrow="Products"
           title="A growing family of AI apps."
           text="We design, build and run every app ourselves. Each one solves one everyday problem — simply and beautifully."
         />
-        </div>
 
         <Stagger className="mt-12 grid gap-6 lg:grid-cols-3" style={{ perspective: 1200 }} stagger={0.15}>
           {categories.map((c) => (
@@ -79,9 +70,7 @@ export function Products() {
             </StaggerItem>
           ))}
         </Stagger>
-
-        <ProductShowcase />
       </Container>
-    </section>
+    </Chapter>
   );
 }

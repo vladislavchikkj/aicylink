@@ -8,7 +8,7 @@ import { EASE_OUT, Reveal } from "./motion/reveal";
 import { Button, Container } from "./ui";
 
 // The logo's sparkle cut into four shards along its rays (center 861,519 in logo coordinates).
-// They fly in and lock together when the banner appears — where the hero crystal's journey ends.
+// They fly in and lock together when the banner appears.
 const SPARKLE_SHARDS = [
   { d: "M861 519L861 435C865 497 872 515 945 519Z", from: { x: 140, y: -160, rotate: 70 } },
   { d: "M861 519L945 519C872 523 865 541 861 603Z", from: { x: 170, y: 130, rotate: -60 } },
@@ -52,7 +52,7 @@ export function Contact() {
   const markRotate = useTransform(scrollYProgress, [0, 1], [-12, 12]);
 
   return (
-    <section id="contact" className="scroll-mt-16 pb-20 sm:pb-28">
+    <section id="contact" data-chapter="Contact" className="scroll-mt-16 pb-20 pt-4 sm:pb-28 lg:pt-12">
       <Container>
         <motion.div
           ref={ref}

@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { principles, site } from "@/content/site";
+import { AppMagnetLoader } from "./app-magnet-loader";
 import { EASE_OUT, Stagger, StaggerItem, WordsReveal } from "./motion/reveal";
 import { Button, Container, Eyebrow } from "./ui";
 
@@ -29,7 +30,8 @@ export function Hero() {
 
   return (
     // On laptops and desktops the first screen fills the window exactly, principles band pinned to its bottom.
-    <section id="top" className="flex flex-col lg:min-h-[calc(100svh-4rem)]">
+    <section id="top" data-chapter="Intro" className="relative isolate flex flex-col lg:min-h-[calc(100svh-4rem)]">
+      <div className="aurora pointer-events-none absolute inset-0 -z-10" aria-hidden />
       <div ref={ref} className="flex flex-1 items-center overflow-hidden">
         <Container className="grid items-center gap-8 py-14 sm:py-20 lg:grid-cols-[1.05fr_1fr] lg:py-10">
           <motion.div style={{ y: textY, opacity: fade }}>
@@ -53,12 +55,11 @@ export function Hero() {
             </FadeIn>
           </motion.div>
 
-          {/* Where the crystal rests on the first screen (drawn by <CrystalStage>, which follows this box) */}
+          {/* Our apps and blocks of ice, magnetised together; the pointer pushes them apart */}
           <motion.div style={{ y: sceneY, scale: sceneScale }}>
-            <div
-              data-crystal-anchor
-              className="relative mx-auto aspect-square w-full max-w-[600px] lg:max-w-[min(600px,calc(100svh-15rem))] lg:cursor-grab lg:active:cursor-grabbing"
-            />
+            <div className="relative mx-auto aspect-square w-full max-w-[600px] lg:max-w-[min(600px,calc(100svh-15rem))]">
+              <AppMagnetLoader />
+            </div>
           </motion.div>
         </Container>
       </div>

@@ -3,14 +3,14 @@
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
-import { appHref } from "@/content/apps";
+import { appDetails, appHref } from "@/content/apps";
 import { categories, type AppId } from "@/content/site";
 import { AppIcon, appTheme } from "./app-icon";
 import { appScreens, LummieWindow, Phone } from "./app-screens";
 import { EASE_OUT, Reveal, Stagger, StaggerItem } from "./motion/reveal";
 import { ScrollRise } from "./motion/scroll";
 import { StatusBadge } from "./status-badge";
-import { SectionHeading } from "./ui";
+import { Button, Chapter, Container, SectionHeading } from "./ui";
 
 const concepts: { id: AppId; name: string; tagline: string; Screen: () => React.JSX.Element }[] = [
   { id: "snap", name: "Platey", tagline: "Calories from a photo", Screen: appScreens.snap },
@@ -21,61 +21,77 @@ const concepts: { id: AppId; name: string; tagline: string; Screen: () => React.
 
 const statusOf = (id: AppId) => categories.flatMap((c) => c.products).find((p) => p.id === id)?.status ?? "early";
 
-export function ProductShowcase() {
-  const [hovered, setHovered] = useState<AppId | null>(null);
+const lummie = appDetails.lummie;
 
+/** Chapter 02: the flagship, described on the left and live on the right. */
+export function Flagship() {
   return (
-    <>
-      <Reveal from="up" className="mt-20" duration={1.2}>
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <AppIcon id="lummie" className="size-11" />
-            <div>
-              <p className="font-semibold">Lummie</p>
-              <p className="text-sm text-muted">Our flagship AI companion</p>
+    <Chapter id="flagship" label="Flagship">
+      <Container className="grid items-center gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <div>
+          <SectionHeading index="02" eyebrow="Flagship" title={lummie.headline} text={lummie.intro} />
+          <Reveal delay={0.2}>
+            <div className="mt-8 flex items-center gap-3">
+              <AppIcon id="lummie" className="size-11" />
+              <div>
+                <p className="font-semibold">Lummie</p>
+                <p className="text-sm text-muted">Live since January 2026</p>
+              </div>
+              <StatusBadge status="flagship" className="ml-2" />
             </div>
-            <StatusBadge status="flagship" className="ml-2" />
-          </div>
-          <div className="flex items-center gap-5 text-sm font-semibold">
-            <Link href={appHref("lummie")} className="transition-colors hover:text-ice-1">
-              Learn more
-            </Link>
-            <a href="https://lummie.app" target="_blank" rel="noreferrer" className="transition-colors hover:text-ice-1">
-              Try Lummie ↗
-            </a>
-          </div>
+          </Reveal>
+          <Stagger className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4" stagger={0.08}>
+            {lummie.features.map((f) => (
+              <StaggerItem key={f.title} from="up">
+                <p className="text-sm font-semibold">{f.title}</p>
+                <p className="mt-0.5 text-sm text-muted">{f.text}</p>
+              </StaggerItem>
+            ))}
+          </Stagger>
+          <Reveal delay={0.3}>
+            <div className="mt-10 flex flex-wrap items-center gap-3">
+              <Button href="https://lummie.app">Try Lummie ↗</Button>
+              <Button href={appHref("lummie")} variant="secondary">
+                Learn more
+              </Button>
+            </div>
+          </Reveal>
         </div>
         <ScrollRise>
           <LummieWindow />
         </ScrollRise>
-      </Reveal>
+      </Container>
+    </Chapter>
+  );
+}
 
-      <div className="mt-24">
-        {/* Mirrored header: the crystal breaks into linked shards in the left column (lg+) */}
-        <div className="grid items-center gap-6 lg:min-h-[360px] lg:grid-cols-2">
-          <div
-            data-crystal-anchor
-            data-crystal-shatter="1"
-            className="pointer-events-none hidden aspect-square w-[min(400px,30vw)] justify-self-center lg:block"
-            aria-hidden
-          />
-          <div>
-            <SectionHeading index="02" eyebrow="In the lab" title="What we're building next." />
-            <Reveal>
-              <p className="mt-4 max-w-sm text-muted">Early concepts of apps in development. Join a waitlist on any app page.</p>
-            </Reveal>
-          </div>
+/** Chapter 03: concepts in development. */
+export function Lab() {
+  const [hovered, setHovered] = useState<AppId | null>(null);
+
+  return (
+    <Chapter id="lab" label="In the lab">
+      <Container>
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <SectionHeading index="03" eyebrow="In the lab" title="What we're building next." />
+          <Reveal>
+            <p className="max-w-sm text-muted">Early concepts of apps in development. Join a waitlist on any app page.</p>
+          </Reveal>
         </div>
 
-        {/* Swipeable row on phones, grid from tablets up */}
+        {/* Swipeable row on phones, grid from tablets up; on laptops the phones shrink to fit one screen */}
         <Stagger
-          className="-mx-4 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-6 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-4 sm:gap-y-10 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-6 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-4 sm:gap-y-10 sm:overflow-visible sm:px-0 sm:pb-0 lg:mt-10 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden"
           stagger={0.12}
         >
           {concepts.map(({ id, name, tagline, Screen }) => (
             <StaggerItem key={id} from="up" className="w-[230px] shrink-0 snap-center sm:w-auto">
               <Link href={appHref(id)} className="block" onPointerEnter={() => setHovered(id)} onPointerLeave={() => setHovered(null)}>
-                <motion.div animate={{ y: hovered === id ? -10 : 0 }} transition={{ duration: 0.5, ease: EASE_OUT }} className="relative">
+                <motion.div
+                  animate={{ y: hovered === id ? -10 : 0 }}
+                  transition={{ duration: 0.5, ease: EASE_OUT }}
+                  className="relative mx-auto lg:max-w-[min(240px,calc((100svh-21rem)*9/19))]"
+                >
                   <AnimatePresence>
                     {hovered === id && (
                       <motion.span
@@ -106,7 +122,7 @@ export function ProductShowcase() {
             </StaggerItem>
           ))}
         </Stagger>
-      </div>
-    </>
+      </Container>
+    </Chapter>
   );
 }

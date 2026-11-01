@@ -13,6 +13,22 @@ export function Eyebrow({ children, className }: { children: React.ReactNode; cl
 }
 
 /** Section title. `index` adds a numbered label ("01 — Products") for the home page's section system. */
+/**
+ * One home-page chapter. From laptops up it fills the screen below the header with its content
+ * centered; the page snaps to chapters and the side rail lists them by `label`.
+ */
+export function Chapter({ id, label, className = "", children }: { id: string; label: string; className?: string; children: React.ReactNode }) {
+  return (
+    <section
+      id={id}
+      data-chapter={label}
+      className={`section-y relative scroll-mt-16 lg:flex lg:min-h-[calc(100svh-4rem)] lg:flex-col lg:justify-center lg:py-12 ${className}`}
+    >
+      {children}
+    </section>
+  );
+}
+
 export function SectionHeading({
   eyebrow,
   title,
