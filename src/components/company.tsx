@@ -2,21 +2,22 @@ import Link from "next/link";
 import { audiences } from "@/content/site";
 import { Stagger, StaggerItem, type From } from "./motion/reveal";
 import { Spotlight } from "./motion/spotlight";
-import { Container, SectionHeading } from "./ui";
+import { Chapter, Container, SectionHeading } from "./ui";
 
 const directions: From[] = ["left", "up", "right"];
 
 export function Company() {
   return (
-    <section id="company" className="scroll-mt-16 py-20 sm:py-28">
+    <Chapter id="company" label="Company">
       <Container>
         <SectionHeading
+          index="04"
           eyebrow="Company"
           title="One studio. Many ways to work together."
           text="AicyLink is a home for simple, useful AI apps: one team, one playbook and one standard of quality across everything we ship."
         />
 
-        <Stagger className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-3" stagger={0.14}>
+        <Stagger className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3" stagger={0.14}>
           {audiences.map((a, i) => (
             <StaggerItem key={a.tag} from={directions[i % 3]} className="bg-white">
               <Spotlight className="flex h-full flex-col p-8">
@@ -34,6 +35,6 @@ export function Company() {
           ))}
         </Stagger>
       </Container>
-    </section>
+    </Chapter>
   );
 }

@@ -18,7 +18,7 @@ export default function CareersPage() {
       <PageHero
         eyebrow="Careers"
         title="Do the best work of your career."
-        text="A small team, real ownership and products that ship. We're always open to meeting people who care about craft as much as we do."
+        text="Lean by design: real ownership, an AI-native stack and products that ship. We bring on people who care about craft as much as we do."
       />
 
       <section className="py-20 sm:py-28">

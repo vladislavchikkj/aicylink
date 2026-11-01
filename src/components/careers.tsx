@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { roles, site } from "@/content/site";
-import { Reveal } from "./motion/reveal";
-import { Button, Container, SectionHeading } from "./ui";
 
 export function RoleList({ limit }: { limit?: number }) {
   const shown = limit ? roles.slice(0, limit) : roles;
@@ -9,9 +7,9 @@ export function RoleList({ limit }: { limit?: number }) {
   if (!shown.length) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-white p-8">
-        <p className="font-semibold">No open roles right now.</p>
+        <p className="font-semibold">We hire selectively as the portfolio grows.</p>
         <p className="mt-2 text-sm text-muted">
-          We&apos;re always happy to meet great people — send us a note at{" "}
+          Exceptional people can reach us anytime at{" "}
           <a href={`mailto:${site.careersEmail}`} className="font-semibold text-foreground hover:text-ice-1">
             {site.careersEmail}
           </a>
@@ -40,27 +38,5 @@ export function RoleList({ limit }: { limit?: number }) {
         </Link>
       ))}
     </div>
-  );
-}
-
-export function Careers() {
-  return (
-    <section id="careers" className="scroll-mt-16 py-20 sm:py-28">
-      <Container className="grid gap-12 lg:grid-cols-2">
-        <div>
-          <SectionHeading
-            eyebrow="Careers"
-            title="Join the team building what's next."
-            text="We're a small team. Everyone ships, everyone owns their work, and every product starts from a blank page."
-          />
-          <Reveal delay={0.25} className="mt-8">
-            <Button href="/careers">Careers at AicyLink</Button>
-          </Reveal>
-        </div>
-        <Reveal from="right" delay={0.15}>
-          <RoleList limit={3} />
-        </Reveal>
-      </Container>
-    </section>
   );
 }

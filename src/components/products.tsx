@@ -5,8 +5,7 @@ import { AppIcon } from "./app-icon";
 import { StatusBadge } from "./status-badge";
 import { Stagger, StaggerItem } from "./motion/reveal";
 import { Spotlight } from "./motion/spotlight";
-import { ProductShowcase } from "./showcase";
-import { Container, SectionHeading } from "./ui";
+import { Chapter, Container, SectionHeading } from "./ui";
 
 function ProductRow({ product }: { product: Product }) {
   return (
@@ -33,9 +32,10 @@ function ProductRow({ product }: { product: Product }) {
 
 export function Products() {
   return (
-    <section id="products" className="scroll-mt-16 bg-surface py-20 sm:py-28">
+    <Chapter id="products" label="Products">
       <Container>
         <SectionHeading
+          index="01"
           eyebrow="Products"
           title="A growing family of AI apps."
           text="We design, build and run every app ourselves. Each one solves one everyday problem — simply and beautifully."
@@ -52,7 +52,7 @@ export function Products() {
                 <p className="mt-3 text-lg font-semibold tracking-tight text-balance">{c.tagline}</p>
 
                 {c.products.length > 0 ? (
-                  <ul className="-mx-3 mt-6 space-y-1">
+                  <ul className="-mx-3 mt-6 space-y-1 md:grid md:grid-cols-2 md:gap-x-2 md:space-y-0 lg:block lg:space-y-1">
                     {c.products.map((p) => (
                       <ProductRow key={p.name} product={p} />
                     ))}
@@ -70,9 +70,7 @@ export function Products() {
             </StaggerItem>
           ))}
         </Stagger>
-
-        <ProductShowcase />
       </Container>
-    </section>
+    </Chapter>
   );
 }
