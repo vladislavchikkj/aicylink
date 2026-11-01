@@ -70,10 +70,10 @@ function makeBodies(count: number): Body[] {
 }
 
 /** Advances the clump: pull to the center, keep bodies apart, let the pointer push them. */
-function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vector3 | null) {
+function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vector3 | null, held: Body | null = null) {
   const d = new THREE.Vector3();
   for (const b of bodies) {
-    if (time < b.delay) continue;
+    if (time < b.delay || b === held) continue;
     b.v.addScaledVector(b.p, -dt * (time < b.delay + 1.5 ? 2.4 : 1.6));
     b.v.z += -b.p.z * dt;
     // A slow drift so the resting clump breathes.
@@ -93,9 +93,10 @@ function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vecto
       if (dist >= min) continue;
       d.divideScalar(dist);
       // Ease overlaps apart over a few frames instead of snapping, so contacts stay soft.
+      // A tile held by the pointer doesn't give way; it shoves the others.
       const push = (min - dist) * 0.3;
-      a.p.addScaledVector(d, -push);
-      b.p.addScaledVector(d, push);
+      if (a !== held) a.p.addScaledVector(d, b === held ? -push * 2 : -push);
+      if (b !== held) b.p.addScaledVector(d, a === held ? push * 2 : push);
       const along = b.v.dot(d) - a.v.dot(d);
       if (along < 0) {
         a.v.addScaledVector(d, along * 0.3);
@@ -104,7 +105,7 @@ function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vecto
         b.spin.x -= along * 0.15;
       }
     }
-    if (pointer) {
+    if (pointer && !held) {
       d.subVectors(a.p, pointer);
       d.z *= 0.4;
       const dist = d.length() || 0.0001;
@@ -120,7 +121,7 @@ function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vecto
   }
   const damp = Math.exp(-dt * 3.4);
   for (const b of bodies) {
-    if (time < b.delay) continue;
+    if (time < b.delay || b === held) continue;
     b.v.multiplyScalar(damp);
     b.p.addScaledVector(b.v, dt);
     b.rot.x += b.spin.x * dt;
@@ -242,19 +243,50 @@ function Clump({
   const client = useRef<{ x: number; y: number } | null>(null);
   const pointer = useMemo(() => new THREE.Vector3(), []);
   const stage = useRef<THREE.Group>(null);
+  // Grab and throw (mouse only: on touch screens a drag must keep scrolling the page).
+  const held = useRef<Body | null>(null);
+  const hovered = useRef<Body | null>(null);
+  const local = useRef<THREE.Vector3 | null>(null);
+  const throwVelocity = useMemo(() => new THREE.Vector3(), []);
+  const lastLocal = useMemo(() => new THREE.Vector3(), []);
   const tile = useTileGeometry();
   const { gl } = useThree();
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => (client.current = { x: e.clientX, y: e.clientY });
     const onLeave = () => (client.current = null);
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse" || e.button !== 0 || !hovered.current) return;
+      if ((e.target as HTMLElement).closest("a, button, input, textarea, select")) return;
+      e.preventDefault(); // no text selection while dragging
+      held.current = hovered.current;
+      throwVelocity.set(0, 0, 0);
+      if (local.current) lastLocal.copy(local.current);
+      document.body.style.cursor = "grabbing";
+    };
+    const onUp = () => {
+      const body = held.current;
+      if (!body) return;
+      held.current = null;
+      // Let go: it keeps the speed it was thrown with, then the magnet pulls it back.
+      body.v.copy(throwVelocity).clampLength(0, 30);
+      body.spin.set(-throwVelocity.y * 0.25, throwVelocity.x * 0.25, (Math.random() - 0.5) * 4);
+      document.body.style.cursor = hovered.current ? "grab" : "";
+    };
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("blur", onUp);
     document.addEventListener("pointerleave", onLeave);
     return () => {
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("blur", onUp);
       document.removeEventListener("pointerleave", onLeave);
+      document.body.style.cursor = "";
     };
-  }, []);
+  }, [lastLocal, throwVelocity]);
 
   useFrame(({ viewport, camera }, delta) => {
     const dt = Math.min(delta, MAX_STEP);
@@ -281,7 +313,43 @@ function Clump({
         push = pointer.set(x, y, 0).sub(stage.current.position).divideScalar(stage.current.scale.x);
       }
     }
-    simulate(bodies, time.current, dt, push);
+    local.current = push;
+
+    // Which tile is under the mouse (front-most wins), for the grab cursor.
+    if (!held.current && client.current && !still) {
+      let hit: Body | null = null;
+      if (push) {
+        for (const b of bodies) {
+          if (time.current < b.delay) continue;
+          const dx = b.p.x - push.x;
+          const dy = b.p.y - push.y;
+          if (dx * dx + dy * dy < b.radius * b.radius * 0.9 && (!hit || b.p.z > hit.p.z)) hit = b;
+        }
+      }
+      // Only offer a grab where nothing on the page sits on top of the scene.
+      const over = document.elementFromPoint(client.current.x, client.current.y);
+      if (over?.closest("a, button, input, textarea, select, h1, p")) hit = null;
+      if (hit !== hovered.current) {
+        hovered.current = hit;
+        document.body.style.cursor = hit ? "grab" : "";
+      }
+    }
+
+    // A held tile follows the pointer; its recent motion becomes the throw.
+    const grabbed = held.current;
+    if (grabbed && push) {
+      grabbed.p.x += (push.x - grabbed.p.x) * Math.min(1, dt * 18);
+      grabbed.p.y += (push.y - grabbed.p.y) * Math.min(1, dt * 18);
+      grabbed.p.z += (0.8 - grabbed.p.z) * Math.min(1, dt * 8);
+      const velocity = lastLocal.clone().sub(push).multiplyScalar(-1 / Math.max(dt, 1e-3));
+      throwVelocity.lerp(velocity, 0.35);
+      lastLocal.copy(push);
+      grabbed.rot.x += (0 - wrap(grabbed.rot.x)) * dt * 6;
+      grabbed.rot.y += (0 - wrap(grabbed.rot.y)) * dt * 6;
+      grabbed.rot.z += (-throwVelocity.x * 0.04 - wrap(grabbed.rot.z)) * dt * 6;
+    }
+
+    simulate(bodies, time.current, dt, held.current ? null : push, held.current);
     // A little pop as each one arrives.
     const scaleOf = (b: Body) => (time.current >= b.delay ? Math.min(1, 0.4 + (time.current - b.delay) * 1.6) : 0.0001);
     bodies.forEach((b, i) => {
