@@ -4,6 +4,7 @@ import { Billboard, Environment, Lightformer, MeshTransmissionMaterial, Presenta
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry.js";
 import { allApps, appHref } from "@/content/apps";
@@ -311,14 +312,15 @@ const LINKS: [number, number][] = [
 ];
 
 function Crystal({
-  mobile,
+  compact,
   shatter,
   intro,
   textures,
   onOpen,
   label,
 }: {
-  mobile: boolean;
+  /** Phones and tablets: a lighter glass material instead of the refraction pass. */
+  compact: boolean;
   shatter: React.RefObject<number>;
   /** Seconds since the opening sequence started. */
   intro: React.RefObject<number>;
@@ -490,29 +492,47 @@ function Crystal({
 
       <group ref={spin} scale={1.3}>
         <mesh ref={mainMesh} geometry={main} scale={0.0001}>
-          <MeshTransmissionMaterial
-            flatShading
-            samples={mobile ? 3 : 6}
-            resolution={mobile ? 256 : 512}
-            thickness={1.4}
-            roughness={0.03}
-            ior={1.31}
-            chromaticAberration={0.6}
-            anisotropicBlur={0.2}
-            distortion={0.25}
-            distortionScale={0.4}
-            temporalDistortion={0}
-            clearcoat={1}
-            clearcoatRoughness={0.05}
-            iridescence={0.3}
-            iridescenceIOR={1.31}
-            color="#e0f2fe"
-            attenuationColor="#7dd3fc"
-            attenuationDistance={4}
-            backside
-            backsideThickness={0.6}
-            background={ICE_BACKGROUND}
-          />
+          {compact ? (
+            <meshPhysicalMaterial
+              flatShading
+              color="#8fd3fb"
+              emissive="#0ea5e9"
+              emissiveIntensity={0.2}
+              roughness={0.08}
+              metalness={0.15}
+              clearcoat={1}
+              clearcoatRoughness={0.04}
+              iridescence={0.7}
+              iridescenceIOR={1.31}
+              envMapIntensity={2.4}
+              transparent
+              opacity={0.9}
+            />
+          ) : (
+            <MeshTransmissionMaterial
+              flatShading
+              samples={6}
+              resolution={512}
+              thickness={1.4}
+              roughness={0.03}
+              ior={1.31}
+              chromaticAberration={0.6}
+              anisotropicBlur={0.2}
+              distortion={0.25}
+              distortionScale={0.4}
+              temporalDistortion={0}
+              clearcoat={1}
+              clearcoatRoughness={0.05}
+              iridescence={0.3}
+              iridescenceIOR={1.31}
+              color="#e0f2fe"
+              attenuationColor="#7dd3fc"
+              attenuationDistance={4}
+              backside
+              backsideThickness={0.6}
+              background={ICE_BACKGROUND}
+            />
+          )}
           <Billboard position={GLINT_AT}>
             <group ref={glint} scale={0.0001}>
               <mesh>
@@ -748,12 +768,15 @@ function Follow({
   shatter,
   intro,
   cardLinks,
+  compact,
 }: {
   children: React.ReactNode;
   orbits: React.RefObject<THREE.Group | null>;
   shatter: React.RefObject<number>;
   intro: React.RefObject<number>;
   cardLinks: React.RefObject<CardLink[]>;
+  /** The canvas sits inside the hero anchor itself (see COMPACT_BLEED), so the crystal simply stays centered. */
+  compact: boolean;
 }) {
   const group = useRef<THREE.Group>(null);
   const turn = useRef<THREE.Group>(null);
@@ -761,7 +784,9 @@ function Follow({
   const haloTexture = useHaloTexture();
 
   useFrame(({ size, viewport }, delta) => {
-    const target = readTarget();
+    const target = compact
+      ? { x: size.width / 2, y: size.height / 2, size: size.width / COMPACT_BLEED, progress: 0, hero: 1, shatter: 0 }
+      : readTarget();
     if (!target || !group.current) return;
     // Opening sequence clock; the shards stay apart until they gather into the crystal.
     intro.current += step(delta);
@@ -778,6 +803,7 @@ function Follow({
     if (halo.current) halo.current.opacity = (1 - target.hero) * (1 - target.shatter * 0.5);
     shatter.current = Math.max(target.shatter, apart);
 
+    if (compact) return;
     const anchors = document.querySelectorAll("[data-crystal-anchor]").length;
     const atLast = Math.max(0, 1 - Math.abs(target.progress - (anchors - 1)) * 2.5);
     updateCardLinks(cardLinks.current ?? [], target, atLast * (1 - target.shatter));
@@ -794,6 +820,11 @@ function Follow({
   );
 }
 
+// Phones and tablets show only the hero anchor. There the canvas is placed inside that box,
+// slightly larger so orbiting tiles are not cut off, and scrolls with the page natively.
+const COMPACT_QUERY = "(max-width: 1023px)";
+const COMPACT_BLEED = 1.3;
+
 export default function CrystalStage() {
   const hidden = useRef<HTMLDivElement>(null);
   const aurora = useRef<HTMLDivElement>(null);
@@ -807,22 +838,24 @@ export default function CrystalStage() {
   const geometry = useTileGeometry();
   const [active, setActive] = useState(true);
   const [ready, setReady] = useState(false);
-  const [env, setEnv] = useState({ mobile: false, still: false, touch: false });
+  const [env, setEnv] = useState({ still: false, touch: false });
+  const [heroBox, setHeroBox] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setEnv({
-      mobile: window.matchMedia("(max-width: 640px)").matches,
-      still,
-      touch: window.matchMedia("(pointer: coarse)").matches,
-    });
+    setEnv({ still, touch: window.matchMedia("(pointer: coarse)").matches });
     if (still) intro.current = INTRO.end;
+
+    const compactQuery = window.matchMedia(COMPACT_QUERY);
+    const onCompact = () => setHeroBox(compactQuery.matches ? document.querySelector<HTMLElement>("[data-crystal-anchor]") : null);
+    onCompact();
+    compactQuery.addEventListener("change", onCompact);
 
     // Render only while an anchor is near the window, and fade the hero gradient as the page moves on.
     const onScroll = () => {
       const anchors = [...document.querySelectorAll<HTMLElement>("[data-crystal-anchor]")].filter((el) => el.offsetWidth > 0);
-      const last = anchors.at(-1)?.getBoundingClientRect();
-      setActive(!last || last.bottom > -window.innerHeight * 0.25);
+      const last = (compactQuery.matches ? anchors[0] : anchors.at(-1))?.getBoundingClientRect();
+      setActive(!last || last.bottom > (compactQuery.matches ? 0 : -window.innerHeight * 0.25));
       if (aurora.current) aurora.current.style.opacity = String(Math.max(0, 1 - window.scrollY / (window.innerHeight * 0.9)));
     };
     onScroll();
@@ -831,109 +864,125 @@ export default function CrystalStage() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      compactQuery.removeEventListener("change", onCompact);
     };
   }, []);
 
+  const compact = heroBox !== null;
+  const scene = (
+    <Canvas
+      className={`transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-0"}`}
+      // The canvas sits under the page, so it listens on the document to stay draggable.
+      eventSource={compact || typeof document === "undefined" ? undefined : document.body}
+      eventPrefix={compact ? undefined : "client"}
+      style={compact ? { pointerEvents: "none" } : undefined}
+      camera={{ position: [0, 0, 9.2], fov: 40 }}
+      dpr={[1, compact ? 1.5 : 1.75]}
+      frameloop={active ? "always" : "never"}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      onCreated={() => setReady(true)}
+    >
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[4, 6, 5]} intensity={1.6} />
+      <Environment resolution={256} frames={1}>
+        <Lightformer form="rect" intensity={3} position={[0, 4, 4]} scale={[8, 2, 1]} />
+        <Lightformer form="rect" intensity={2.5} color="#fb923c" position={[-5, 0, 2]} rotation-y={Math.PI / 2} scale={[6, 4, 1]} />
+        <Lightformer form="rect" intensity={2.5} color="#7c5cff" position={[5, -1, 2]} rotation-y={-Math.PI / 2} scale={[6, 4, 1]} />
+        <Lightformer form="ring" intensity={2} color="#38bdf8" position={[0, -3, -4]} scale={4} />
+      </Environment>
+
+      <Follow orbits={orbits} shatter={shatter} intro={intro} cardLinks={cardLinks} compact={compact}>
+        <PresentationControls
+          enabled={!env.touch}
+          global={false}
+          cursor={false}
+          snap
+          speed={1.4}
+          rotation={[0.12, -0.3, 0]}
+          polar={[-0.35, 0.35]}
+          azimuth={[-Math.PI / 1.5, Math.PI / 1.5]}
+        >
+          <TiltRig still={env.still || env.touch}>
+            <Crystal
+              compact={compact}
+              shatter={shatter}
+              intro={intro}
+              textures={textures}
+              label={label}
+              onOpen={(id) => router.push(appHref(id))}
+            />
+            <group ref={orbits}>
+              {RINGS.map((ring, r) => (
+                <Ring
+                  key={ring.radius}
+                  {...ring}
+                  textures={textures}
+                  geometry={geometry}
+                  still={env.still}
+                  first={RINGS.slice(0, r).reduce((n, x) => n + x.ids.length, 0)}
+                  intro={intro}
+                />
+              ))}
+            </group>
+          </TiltRig>
+        </PresentationControls>
+      </Follow>
+    </Canvas>
+  );
+
   return (
-    // Behind all page content: sections with their own background simply cover it.
-    <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden>
-      <div ref={aurora} className="aurora absolute inset-0" />
+    <>
+      {/* Behind all page content: sections with their own background simply cover it. */}
+      <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden>
+        <div ref={aurora} className="aurora absolute inset-0" />
 
-      <svg className="absolute inset-0 size-full" aria-hidden>
-        {[0, 1, 2].map((i) => (
-          <g key={i}>
-            <path
-              ref={(el) => {
-                cardLinks.current[i].path = el;
-              }}
-              className="crystal-link"
-              fill="none"
-              stroke="#38bdf8"
-              strokeWidth="1.5"
-              style={{ opacity: 0 }}
-            />
-            <circle
-              ref={(el) => {
-                cardLinks.current[i].dot = el;
-              }}
-              r="4"
-              fill="#38bdf8"
-              style={{ opacity: 0 }}
-            />
-          </g>
-        ))}
-      </svg>
-
-      <span
-        ref={label}
-        className="absolute left-0 top-0 z-10 whitespace-nowrap rounded-full bg-ink px-2.5 py-1 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200"
-      />
-
-      <div ref={hidden} className="hidden">
-        {ORDER.map((id) => (
-          <span key={id} data-icon={id}>
-            <AppIcon id={id} />
-          </span>
-        ))}
-      </div>
-
-      <Canvas
-        className={`transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-0"}`}
-        // The canvas sits under the page, so it listens on the document to stay draggable.
-        eventSource={typeof document !== "undefined" ? document.body : undefined}
-        eventPrefix="client"
-        camera={{ position: [0, 0, 9.2], fov: 40 }}
-        dpr={[1, env.mobile ? 1.5 : 1.75]}
-        frameloop={active ? "always" : "never"}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-        onCreated={() => setReady(true)}
-      >
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[4, 6, 5]} intensity={1.6} />
-        <Environment resolution={256} frames={1}>
-          <Lightformer form="rect" intensity={3} position={[0, 4, 4]} scale={[8, 2, 1]} />
-          <Lightformer form="rect" intensity={2.5} color="#fb923c" position={[-5, 0, 2]} rotation-y={Math.PI / 2} scale={[6, 4, 1]} />
-          <Lightformer form="rect" intensity={2.5} color="#7c5cff" position={[5, -1, 2]} rotation-y={-Math.PI / 2} scale={[6, 4, 1]} />
-          <Lightformer form="ring" intensity={2} color="#38bdf8" position={[0, -3, -4]} scale={4} />
-        </Environment>
-
-        <Follow orbits={orbits} shatter={shatter} intro={intro} cardLinks={cardLinks}>
-          <PresentationControls
-            enabled={!env.touch}
-            global={false}
-            cursor={false}
-            snap
-            speed={1.4}
-            rotation={[0.12, -0.3, 0]}
-            polar={[-0.35, 0.35]}
-            azimuth={[-Math.PI / 1.5, Math.PI / 1.5]}
-          >
-            <TiltRig still={env.still || env.touch}>
-              <Crystal
-                mobile={env.mobile}
-                shatter={shatter}
-                intro={intro}
-                textures={textures}
-                label={label}
-                onOpen={(id) => router.push(appHref(id))}
+        <svg className="absolute inset-0 size-full" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <g key={i}>
+              <path
+                ref={(el) => {
+                  cardLinks.current[i].path = el;
+                }}
+                className="crystal-link"
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="1.5"
+                style={{ opacity: 0 }}
               />
-              <group ref={orbits}>
-                {RINGS.map((ring, r) => (
-                  <Ring
-                    key={ring.radius}
-                    {...ring}
-                    textures={textures}
-                    geometry={geometry}
-                    still={env.still}
-                    first={RINGS.slice(0, r).reduce((n, x) => n + x.ids.length, 0)}
-                    intro={intro}
-                  />
-                ))}
-              </group>
-            </TiltRig>
-          </PresentationControls>
-        </Follow>
-      </Canvas>
-    </div>
+              <circle
+                ref={(el) => {
+                  cardLinks.current[i].dot = el;
+                }}
+                r="4"
+                fill="#38bdf8"
+                style={{ opacity: 0 }}
+              />
+            </g>
+          ))}
+        </svg>
+
+        <span
+          ref={label}
+          className="absolute left-0 top-0 z-10 whitespace-nowrap rounded-full bg-ink px-2.5 py-1 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200"
+        />
+
+        <div ref={hidden} className="hidden">
+          {ORDER.map((id) => (
+            <span key={id} data-icon={id}>
+              <AppIcon id={id} />
+            </span>
+          ))}
+        </div>
+
+        {!compact && scene}
+      </div>
+      {heroBox &&
+        createPortal(
+          <div className="pointer-events-none absolute" style={{ inset: `${-((COMPACT_BLEED - 1) / 2) * 100}%` }} aria-hidden>
+            {scene}
+          </div>,
+          heroBox,
+        )}
+    </>
   );
 }
