@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { allApps, appHref } from "@/content/apps";
 import type { AppId } from "@/content/site";
 import { AppIcon, appTheme } from "./app-icon";
@@ -195,43 +196,79 @@ function Ring({
   );
 }
 
-// AicyLink's own ice shard: a lopsided gem of large flat facets with a chiselled, two-point top.
-const GEM: [number, number, number][] = [
-  [0.18, 1.55, 0.08],
-  [-0.24, 1.18, -0.1],
-  [0.72, 0.62, 0.22],
-  [0.48, 0.8, -0.48],
-  [-0.62, 0.68, 0.38],
-  [-0.56, 0.42, -0.5],
-  [0.06, 0.55, 0.72],
-  [0.82, -0.3, -0.05],
-  [-0.78, -0.22, 0.05],
-  [0.25, -0.15, 0.78],
-  [-0.15, -0.35, -0.75],
-  [0.45, -1.05, 0.35],
-  [-0.4, -1.0, -0.3],
-  [0.05, -1.55, -0.05],
-];
+// AicyLink's crystal: a cluster of six-sided points of different length and lean, growing out
+// of a faceted base. Everything is merged into one mesh so it costs a single glass pass.
 
-/** Stable pseudo-random value in [-1, 1]. */
-function jitter(x: number, y: number, z: number, seed: number) {
-  const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + seed * 19.3) * 43758.5453;
-  return (s - Math.floor(s)) * 2 - 1;
+/** One hexagonal point: a prism standing on y = 0 with a pyramid tip. */
+function prism(radius: number, length: number, tip: number) {
+  const profile = [
+    new THREE.Vector2(0, 0),
+    new THREE.Vector2(radius, 0),
+    new THREE.Vector2(radius, length),
+    new THREE.Vector2(0, length + tip),
+  ];
+  const geometry = new THREE.LatheGeometry(profile, 6).toNonIndexed();
+  geometry.deleteAttribute("uv");
+  return geometry;
 }
 
-/** The gem at a given size; any seed other than 0 gives a sibling shard with its own facets. */
-function useGemGeometry(size: number, seed = 0) {
+type Point = { radius: number; length: number; tip: number; at: [number, number, number]; lean: [number, number, number] };
+
+const POINTS: Point[] = [
+  { radius: 0.4, length: 1.75, tip: 0.72, at: [-0.12, -0.95, 0], lean: [0.04, 0, 0.1] },
+  { radius: 0.34, length: 1.15, tip: 0.6, at: [0.42, -0.95, -0.12], lean: [0.12, 0.3, -0.6] },
+  { radius: 0.27, length: 0.95, tip: 0.48, at: [0.18, -0.95, 0.32], lean: [0.45, 0.2, -0.22] },
+  { radius: 0.28, length: 0.85, tip: 0.46, at: [-0.42, -0.95, 0.12], lean: [0.2, -0.2, 0.95] },
+  { radius: 0.22, length: 0.7, tip: 0.38, at: [0.02, -0.95, -0.4], lean: [-0.55, 0, -0.12] },
+];
+
+// The rock the points grow from: a low, lopsided gem.
+const BASE: [number, number, number][] = [
+  [-0.95, 0, 0.1],
+  [-0.6, 0.22, 0.55],
+  [0.1, 0.25, 0.7],
+  [0.8, 0.15, 0.45],
+  [1.0, 0, -0.1],
+  [0.55, 0.2, -0.65],
+  [-0.2, 0.22, -0.7],
+  [-0.75, 0.12, -0.45],
+  [-0.55, -0.32, 0.3],
+  [0.45, -0.35, 0.35],
+  [0.3, -0.3, -0.4],
+  [-0.4, -0.3, -0.35],
+];
+
+function useClusterGeometry() {
   return useMemo(() => {
-    const points = GEM.map(([x, y, z]) => {
-      const n = seed ? 0.16 : 0;
-      return new THREE.Vector3(
-        (x + jitter(x, y, z, seed) * n) * size,
-        (y + jitter(x, y, z, seed + 1) * n) * size,
-        (z + jitter(x, y, z, seed + 2) * n) * size,
+    const parts = POINTS.map((p) => {
+      const g = prism(p.radius, p.length, p.tip);
+      g.applyMatrix4(
+        new THREE.Matrix4().compose(
+          new THREE.Vector3(...p.at),
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(...p.lean)),
+          new THREE.Vector3(1, 1, 1),
+        ),
       );
+      return g;
     });
-    return new ConvexGeometry(points);
-  }, [size, seed]);
+    const base = new ConvexGeometry(BASE.map(([x, y, z]) => new THREE.Vector3(x * 0.85, y - 0.95, z * 0.75)));
+    const geometry = mergeGeometries([base, ...parts])!;
+    // Where the tallest point ends, for the glint.
+    const p = POINTS[0];
+    const tip = new THREE.Vector3(0, p.length + p.tip, 0)
+      .applyEuler(new THREE.Euler(...p.lean))
+      .add(new THREE.Vector3(...p.at));
+    return { geometry, tip: tip.toArray() as [number, number, number] };
+  }, []);
+}
+
+/** A single loose point, for the shards that break off. */
+function usePrismGeometry(radius: number, length: number, tip: number) {
+  return useMemo(() => {
+    const g = prism(radius, length, tip);
+    g.translate(0, -(length + tip) / 2, 0);
+    return g;
+  }, [radius, length, tip]);
 }
 
 /** Radial gradient sprite: glow, flash and glint textures share this. */
@@ -276,8 +313,6 @@ const backOut = (t: number) => {
   return t <= 0 ? 0 : 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2;
 };
 
-// One glint that now and then sparkles on the crystal's tip, like the sparkle in the logo.
-const GLINT_AT: [number, number, number] = [GEM[0][0], GEM[0][1], GEM[0][2]];
 
 // What the ice refracts: a pale sky instead of the transparent (black) canvas.
 const ICE_BACKGROUND = new THREE.Color("#f1efff");
@@ -329,9 +364,9 @@ function Crystal({
   /** DOM pill that names the hovered app; positioned here every frame. */
   label: React.RefObject<HTMLSpanElement | null>;
 }) {
-  const main = useGemGeometry(1);
-  const small = useGemGeometry(0.5, 7);
-  const medium = useGemGeometry(0.68, 3);
+  const { geometry: main, tip: glintAt } = useClusterGeometry();
+  const small = usePrismGeometry(0.2, 0.6, 0.3);
+  const medium = usePrismGeometry(0.26, 0.85, 0.4);
   const glowTexture = useRadialTexture([
     [0, "rgba(125,211,252,0.55)"],
     [0.4, "rgba(167,139,250,0.22)"],
@@ -452,7 +487,8 @@ function Crystal({
       }
     }
 
-    if (core.current) core.current.scale.setScalar(Math.max(coreIn * (1 - k * 0.6) * (1 + (1 - mainIn) * 0.4), 0.0001));
+    // The core leads the opening and links the broken network; whole, the crystal needs no inner blob.
+    if (core.current) core.current.scale.setScalar(Math.max(coreIn * Math.max(1 - mainIn, k * 0.5) * 1.4, 0.0001));
     if (coreLight.current) coreLight.current.intensity = 6 * coreIn + Math.sin(flashT * Math.PI) * 60;
     if (sweep.current) {
       // A light circling the crystal makes its facets flash in turn.
@@ -495,45 +531,45 @@ function Crystal({
           {compact ? (
             <meshPhysicalMaterial
               flatShading
-              color="#8fd3fb"
-              emissive="#0ea5e9"
-              emissiveIntensity={0.2}
-              roughness={0.08}
-              metalness={0.15}
+              color="#7c83f7"
+              emissive="#4338ca"
+              emissiveIntensity={0.25}
+              roughness={0.06}
+              metalness={0.2}
               clearcoat={1}
-              clearcoatRoughness={0.04}
-              iridescence={0.7}
-              iridescenceIOR={1.31}
+              clearcoatRoughness={0.03}
+              iridescence={0.6}
+              iridescenceIOR={1.5}
               envMapIntensity={2.4}
               transparent
-              opacity={0.9}
+              opacity={0.92}
             />
           ) : (
             <MeshTransmissionMaterial
               flatShading
               samples={6}
               resolution={512}
-              thickness={1.4}
-              roughness={0.03}
-              ior={1.31}
-              chromaticAberration={0.6}
-              anisotropicBlur={0.2}
-              distortion={0.25}
-              distortionScale={0.4}
+              thickness={1.2}
+              roughness={0.02}
+              ior={1.5}
+              chromaticAberration={0.35}
+              anisotropicBlur={0.1}
+              distortion={0.08}
+              distortionScale={0.3}
               temporalDistortion={0}
               clearcoat={1}
-              clearcoatRoughness={0.05}
+              clearcoatRoughness={0.03}
               iridescence={0.3}
-              iridescenceIOR={1.31}
-              color="#e0f2fe"
-              attenuationColor="#7dd3fc"
-              attenuationDistance={4}
-              backside
-              backsideThickness={0.6}
+              iridescenceIOR={1.5}
+              color="#dde0ff"
+              attenuationColor="#5b5bf0"
+              attenuationDistance={1.8}
+              envMapIntensity={1.6}
               background={ICE_BACKGROUND}
             />
           )}
-          <Billboard position={GLINT_AT}>
+          {/* Now and then the tallest point sparkles, like the sparkle in the logo. */}
+          <Billboard position={glintAt}>
             <group ref={glint} scale={0.0001}>
               <mesh>
                 <planeGeometry />
@@ -557,8 +593,8 @@ function Crystal({
           >
             <meshPhysicalMaterial
               flatShading
-              color="#cfeefe"
-              emissive="#38bdf8"
+              color="#c7d2fe"
+              emissive="#6366f1"
               emissiveIntensity={0.22}
               roughness={0.04}
               metalness={0}
