@@ -224,15 +224,22 @@ function useTileGeometry() {
 
 function Clump({
   compact,
+  glass,
   still,
   textures,
   anchor,
+  onSlow,
 }: {
+  /** Phones and tablets: fewer ice blocks. */
   compact: boolean;
+  /** Real refracting glass for the ice; off on phones and on devices in light mode. */
+  glass: boolean;
   still: boolean;
   textures: Partial<Record<AppId, THREE.Texture>>;
   /** The page box the clump rests in; tiles may still fly anywhere on the canvas. */
   anchor: HTMLElement | null;
+  /** Called once if the opening frames come in too slowly, so the scene can drop to a lighter mode. */
+  onSlow: () => void;
 }) {
   const bodies = useMemo(() => {
     const list = makeBodies(compact ? 3 : ICE_COUNT);
@@ -251,6 +258,8 @@ function Clump({
   const client = useRef<{ x: number; y: number } | null>(null);
   const pointer = useMemo(() => new THREE.Vector3(), []);
   const stage = useRef<THREE.Group>(null);
+  // Frame times while the tiles fly in, to judge whether this device keeps up.
+  const probe = useRef({ frames: 0, total: 0, done: false });
   // Grab and throw (mouse only: on touch screens a drag must keep scrolling the page).
   const held = useRef<Body | null>(null);
   const hovered = useRef<Body | null>(null);
@@ -301,6 +310,16 @@ function Clump({
 
   useFrame(({ viewport, camera }, delta) => {
     const dt = Math.min(delta, MAX_STEP);
+    const p = probe.current;
+    if (!p.done && time.current > 0.3) {
+      p.frames++;
+      p.total += delta;
+      // Averaging under ~40 fps over the opening means this device can't afford full quality.
+      if (p.frames === 45) {
+        p.done = true;
+        if (p.total / p.frames > 1 / 40) onSlow();
+      }
+    }
     time.current += dt;
     const rect = gl.domElement.getBoundingClientRect();
     const vp = viewport.getCurrentViewport(camera, [0, 0, 0]);
@@ -426,12 +445,12 @@ function Clump({
 
       {/* All the ice in one instanced mesh: a single glass pass however many blocks there are. */}
       <instancedMesh ref={ice} args={[iceGeometry, undefined, iceBodies.length]} frustumCulled={false}>
-        {compact ? (
+        {!glass ? (
           <meshPhysicalMaterial color="#bfe6fb" roughness={0.06} clearcoat={1} transparent opacity={0.6} envMapIntensity={2.2} depthWrite={false} />
         ) : (
           <MeshTransmissionMaterial
-            samples={2}
-            resolution={256}
+            samples={4}
+            resolution={512}
             thickness={1.2}
             roughness={0.02}
             ior={1.31}
@@ -458,6 +477,8 @@ export default function AppMagnet() {
   const textures = useIconTextures(hidden);
   const [active, setActive] = useState(true);
   const [env, setEnv] = useState<{ compact: boolean; still: boolean } | null>(null);
+  // Full sharpness and real glass by default; weak or struggling devices get the light mode.
+  const [light, setLight] = useState(false);
 
   useEffect(() => {
     // Weak devices skip the glass refraction pass, the heaviest part of a frame.
@@ -466,8 +487,9 @@ export default function AppMagnet() {
     // Starting the scene blocks the main thread for a moment: do it in the first idle moment
     // after the page hydrates, so the tiles arrive right away without fighting the first paint.
     const start = () => {
+      setLight(weak);
       setEnv({
-        compact: weak || window.matchMedia("(max-width: 1023px)").matches,
+        compact: window.matchMedia("(max-width: 1023px)").matches,
         still: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       });
       setAnchor(document.querySelector<HTMLElement>("[data-magnet-anchor]"));
@@ -501,7 +523,7 @@ export default function AppMagnet() {
           style={{ pointerEvents: "none" }}
           camera={{ position: [0, 0, 11], fov: 32 }}
           resize={{ scroll: false }}
-          dpr={1}
+          dpr={light ? 1 : [1, 2]}
           frameloop={active ? "demand" : "never"}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         >
@@ -513,7 +535,14 @@ export default function AppMagnet() {
             <Lightformer form="rect" intensity={2.5} color="#7c5cff" position={[5, -1, 2]} rotation-y={-Math.PI / 2} scale={[6, 4, 1]} />
             <Lightformer form="ring" intensity={2} color="#38bdf8" position={[0, -3, -4]} scale={4} />
           </Environment>
-          <Clump compact={env.compact} still={env.still} textures={textures} anchor={anchor} />
+          <Clump
+            compact={env.compact}
+            glass={!env.compact && !light}
+            still={env.still}
+            textures={textures}
+            anchor={anchor}
+            onSlow={() => setLight(true)}
+          />
         </Canvas>
       )}
     </div>
