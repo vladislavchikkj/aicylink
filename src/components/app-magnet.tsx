@@ -30,6 +30,8 @@ type Body = {
   p: THREE.Vector3;
   /** Position before the latest step, to tell whether it still visibly moves. */
   last: THREE.Vector3;
+  /** Its own resting spot around the center, so the clump stays loose instead of collapsing to a point. */
+  home: THREE.Vector3;
   v: THREE.Vector3;
   rot: THREE.Euler;
   spin: THREE.Vector3;
@@ -53,8 +55,18 @@ function makeBodies(count: number): Body[] {
   const kinds: Body["kind"][] = [...APPS.map(() => "app" as const), ...Array.from({ length: count }, () => "ice" as const)];
   // Interleave so ice and apps arrive mixed, Lummie first.
   const order = kinds.map((_, i) => i).sort((a, b) => (a === 0 ? -1 : b === 0 ? 1 : rand() - 0.5));
+  const golden = Math.PI * (3 - Math.sqrt(5));
   return order.map((i, n) => {
     const kind = kinds[i];
+    // Lummie rests at the front of the center; the rest spread over a flattened sphere around it.
+    const k = n - 1;
+    const total = order.length - 1;
+    const y = 1 - ((k + 0.5) / total) * 2;
+    const ring = Math.sqrt(1 - y * y);
+    const home =
+      n === 0
+        ? new THREE.Vector3(0, 0.05, 0.9)
+        : new THREE.Vector3(Math.cos(golden * k) * ring * 2.25, y * 1.85, Math.sin(golden * k) * ring * 0.9);
     const angle = rand() * Math.PI * 2;
     const from = new THREE.Vector3(Math.cos(angle) * 6.5, Math.sin(angle) * 5, -2 + rand() * 4);
     return {
@@ -65,6 +77,7 @@ function makeBodies(count: number): Body[] {
       from,
       p: from.clone(),
       last: from.clone(),
+      home,
       v: new THREE.Vector3(),
       rot: new THREE.Euler((rand() - 0.5) * 2, (rand() - 0.5) * 2, (rand() - 0.5) * 2),
       spin: new THREE.Vector3((rand() - 0.5) * 1.2, (rand() - 0.5) * 1.2, (rand() - 0.5) * 0.8),
@@ -72,7 +85,7 @@ function makeBodies(count: number): Body[] {
   });
 }
 
-/** Advances the clump: pull to the center, keep bodies apart, let the pointer push them. */
+/** Advances the clump: pull each body home, keep bodies apart, let the pointer push them. */
 function simulate(
   bodies: Body[],
   time: number,
@@ -81,12 +94,21 @@ function simulate(
   held: Body | null = null,
   /** The tile under the mouse stays put so it can be grabbed; only its neighbours lean away. */
   hovered: Body | null = null,
+  /** Let every body sway gently around its home. */
+  float = false,
 ) {
   const d = new THREE.Vector3();
+  const target = new THREE.Vector3();
   for (const b of bodies) {
     if (time < b.delay || b === held) continue;
-    b.v.addScaledVector(b.p, -dt * (time < b.delay + 1.5 ? 2.4 : 1.6));
-    b.v.z += -b.p.z * dt;
+    target.copy(b.home);
+    if (float) {
+      const phase = b.delay * 9;
+      target.x += Math.sin(time * 0.55 + phase) * 0.14;
+      target.y += Math.cos(time * 0.45 + phase * 1.3) * 0.14;
+      target.z += Math.sin(time * 0.35 + phase * 0.7) * 0.1;
+    }
+    b.v.addScaledVector(target.sub(b.p), dt * (time < b.delay + 1.5 ? 2.4 : 1.6));
   }
   for (let i = 0; i < bodies.length; i++) {
     const a = bodies[i];
@@ -229,6 +251,7 @@ function Clump({
   textures,
   anchor,
   onSlow,
+  float,
 }: {
   /** Phones and tablets: fewer ice blocks. */
   compact: boolean;
@@ -240,6 +263,8 @@ function Clump({
   anchor: HTMLElement | null;
   /** Called once if the opening frames come in too slowly, so the scene can drop to a lighter mode. */
   onSlow: () => void;
+  /** Keep the clump gently swaying at rest (costs a steady 30 fps). */
+  float: boolean;
 }) {
   const bodies = useMemo(() => {
     const list = makeBodies(compact ? 3 : ICE_COUNT);
@@ -260,6 +285,8 @@ function Clump({
   const stage = useRef<THREE.Group>(null);
   // Frame times while the tiles fly in, to judge whether this device keeps up.
   const probe = useRef({ frames: 0, total: 0, done: false });
+  const swayTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(swayTimer.current), []);
   // Grab and throw (mouse only: on touch screens a drag must keep scrolling the page).
   const held = useRef<Body | null>(null);
   const hovered = useRef<Body | null>(null);
@@ -380,17 +407,24 @@ function Clump({
     }
 
     for (const b of bodies) b.last.copy(b.p);
-    simulate(bodies, time.current, dt, held.current ? null : push, held.current, hovered.current);
+    simulate(bodies, time.current, dt, held.current ? null : push, held.current, hovered.current, float);
 
-    // Rendering is on demand: keep frames coming only while something visibly moves, so a resting
-    // clump costs the GPU nothing (the pointer moving wakes it up again). Tiles pressed together
-    // keep a little velocity against each other, so this looks at how far they actually moved.
+    // Rendering is on demand: full frame rate while something really moves (fly-in, a push, a
+    // throw), 30 fps for the gentle sway, nothing at all when the sway is off and the clump rests.
+    // The check looks at how far tiles actually moved, since tiles pressed together keep a little
+    // velocity against each other.
     const arrived = bodies.reduce((t, b) => Math.max(t, b.delay), 0) + 1;
     const moving =
       time.current < arrived ||
       held.current !== null ||
-      bodies.some((b) => b.p.distanceToSquared(b.last) > (0.0008 * dt * 60) ** 2 || b.spin.lengthSq() > 4e-3);
+      bodies.some((b) => b.p.distanceToSquared(b.last) > (0.004 * dt * 60) ** 2 || b.spin.lengthSq() > 4e-3);
     if (moving) invalidate();
+    else if (float && !swayTimer.current) {
+      swayTimer.current = window.setTimeout(() => {
+        swayTimer.current = 0;
+        invalidate();
+      }, 1000 / 30);
+    }
     // A little pop as each one arrives.
     const scaleOf = (b: Body) => (time.current >= b.delay ? Math.min(1, 0.4 + (time.current - b.delay) * 1.6) : 0.0001);
     bodies.forEach((b, i) => {
@@ -542,6 +576,7 @@ export default function AppMagnet() {
             textures={textures}
             anchor={anchor}
             onSlow={() => setLight(true)}
+            float={!light && !env.still}
           />
         </Canvas>
       )}
