@@ -56,12 +56,12 @@ function makeBodies(count: number): Body[] {
   return order.map((i, n) => {
     const kind = kinds[i];
     const angle = rand() * Math.PI * 2;
-    const from = new THREE.Vector3(Math.cos(angle) * 11, Math.sin(angle) * 8, -2 + rand() * 4);
+    const from = new THREE.Vector3(Math.cos(angle) * 6.5, Math.sin(angle) * 5, -2 + rand() * 4);
     return {
       kind,
       id: kind === "app" ? APPS[i] : undefined,
       radius: kind === "app" ? 0.66 : 0.6,
-      delay: 0.25 + n * 0.14,
+      delay: 0.1 + n * 0.1,
       from,
       p: from.clone(),
       last: from.clone(),
@@ -463,8 +463,8 @@ export default function AppMagnet() {
     // Weak devices skip the glass refraction pass, the heaviest part of a frame.
     const nav = navigator as Navigator & { deviceMemory?: number };
     const weak = (nav.hardwareConcurrency ?? 8) <= 4 || (nav.deviceMemory ?? 8) <= 4;
-    // Starting the scene blocks the main thread for a moment, so wait until the hero's text
-    // has animated in and the browser is idle; the page never stutters while it appears.
+    // Starting the scene blocks the main thread for a moment: do it in the first idle moment
+    // after the page hydrates, so the tiles arrive right away without fighting the first paint.
     const start = () => {
       setEnv({
         compact: weak || window.matchMedia("(max-width: 1023px)").matches,
@@ -475,8 +475,8 @@ export default function AppMagnet() {
     let idle = 0;
     const timer = window.setTimeout(() => {
       // Safari has no requestIdleCallback.
-      idle = typeof (window as Partial<Window>).requestIdleCallback === "function" ? window.requestIdleCallback(start, { timeout: 1000 }) : window.setTimeout(start, 0);
-    }, 1800);
+      idle = typeof (window as Partial<Window>).requestIdleCallback === "function" ? window.requestIdleCallback(start, { timeout: 300 }) : window.setTimeout(start, 0);
+    }, 0);
     // Render only while the hero is on screen.
     const observer = new IntersectionObserver(([entry]) => setActive(entry.isIntersecting));
     if (box.current) observer.observe(box.current);
