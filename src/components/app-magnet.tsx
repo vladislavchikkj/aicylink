@@ -30,6 +30,8 @@ type Body = {
   p: THREE.Vector3;
   /** Position before the latest step, to tell whether it still visibly moves. */
   last: THREE.Vector3;
+  /** Its own resting spot around the center, so the clump stays loose instead of collapsing to a point. */
+  home: THREE.Vector3;
   v: THREE.Vector3;
   rot: THREE.Euler;
   spin: THREE.Vector3;
@@ -53,8 +55,18 @@ function makeBodies(count: number): Body[] {
   const kinds: Body["kind"][] = [...APPS.map(() => "app" as const), ...Array.from({ length: count }, () => "ice" as const)];
   // Interleave so ice and apps arrive mixed, Lummie first.
   const order = kinds.map((_, i) => i).sort((a, b) => (a === 0 ? -1 : b === 0 ? 1 : rand() - 0.5));
+  const golden = Math.PI * (3 - Math.sqrt(5));
   return order.map((i, n) => {
     const kind = kinds[i];
+    // Lummie rests at the front of the center; the rest spread over a flattened sphere around it.
+    const k = n - 1;
+    const total = order.length - 1;
+    const y = 1 - ((k + 0.5) / total) * 2;
+    const ring = Math.sqrt(1 - y * y);
+    const home =
+      n === 0
+        ? new THREE.Vector3(0, 0.05, 0.9)
+        : new THREE.Vector3(Math.cos(golden * k) * ring * 2.25, y * 1.85, Math.sin(golden * k) * ring * 0.9);
     const angle = rand() * Math.PI * 2;
     const from = new THREE.Vector3(Math.cos(angle) * 6.5, Math.sin(angle) * 5, -2 + rand() * 4);
     return {
@@ -65,6 +77,7 @@ function makeBodies(count: number): Body[] {
       from,
       p: from.clone(),
       last: from.clone(),
+      home,
       v: new THREE.Vector3(),
       rot: new THREE.Euler((rand() - 0.5) * 2, (rand() - 0.5) * 2, (rand() - 0.5) * 2),
       spin: new THREE.Vector3((rand() - 0.5) * 1.2, (rand() - 0.5) * 1.2, (rand() - 0.5) * 0.8),
@@ -72,7 +85,7 @@ function makeBodies(count: number): Body[] {
   });
 }
 
-/** Advances the clump: pull to the center, keep bodies apart, let the pointer push them. */
+/** Advances the clump: pull each body home, keep bodies apart, let the pointer push them. */
 function simulate(
   bodies: Body[],
   time: number,
@@ -81,12 +94,21 @@ function simulate(
   held: Body | null = null,
   /** The tile under the mouse stays put so it can be grabbed; only its neighbours lean away. */
   hovered: Body | null = null,
+  /** Let every body sway gently around its home. */
+  float = false,
 ) {
   const d = new THREE.Vector3();
+  const target = new THREE.Vector3();
   for (const b of bodies) {
     if (time < b.delay || b === held) continue;
-    b.v.addScaledVector(b.p, -dt * (time < b.delay + 1.5 ? 2.4 : 1.6));
-    b.v.z += -b.p.z * dt;
+    target.copy(b.home);
+    if (float) {
+      const phase = b.delay * 9;
+      target.x += Math.sin(time * 0.55 + phase) * 0.14;
+      target.y += Math.cos(time * 0.45 + phase * 1.3) * 0.14;
+      target.z += Math.sin(time * 0.35 + phase * 0.7) * 0.1;
+    }
+    b.v.addScaledVector(target.sub(b.p), dt * (time < b.delay + 1.5 ? 2.4 : 1.6));
   }
   for (let i = 0; i < bodies.length; i++) {
     const a = bodies[i];
@@ -224,15 +246,25 @@ function useTileGeometry() {
 
 function Clump({
   compact,
+  glass,
   still,
   textures,
   anchor,
+  onSlow,
+  float,
 }: {
+  /** Phones and tablets: fewer ice blocks. */
   compact: boolean;
+  /** Real refracting glass for the ice; off on phones and on devices in light mode. */
+  glass: boolean;
   still: boolean;
   textures: Partial<Record<AppId, THREE.Texture>>;
   /** The page box the clump rests in; tiles may still fly anywhere on the canvas. */
   anchor: HTMLElement | null;
+  /** Called once if the opening frames come in too slowly, so the scene can drop to a lighter mode. */
+  onSlow: () => void;
+  /** Keep the clump gently swaying at rest (costs a steady 30 fps). */
+  float: boolean;
 }) {
   const bodies = useMemo(() => {
     const list = makeBodies(compact ? 3 : ICE_COUNT);
@@ -251,6 +283,10 @@ function Clump({
   const client = useRef<{ x: number; y: number } | null>(null);
   const pointer = useMemo(() => new THREE.Vector3(), []);
   const stage = useRef<THREE.Group>(null);
+  // Frame times while the tiles fly in, to judge whether this device keeps up.
+  const probe = useRef({ frames: 0, total: 0, done: false });
+  const swayTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(swayTimer.current), []);
   // Grab and throw (mouse only: on touch screens a drag must keep scrolling the page).
   const held = useRef<Body | null>(null);
   const hovered = useRef<Body | null>(null);
@@ -301,6 +337,16 @@ function Clump({
 
   useFrame(({ viewport, camera }, delta) => {
     const dt = Math.min(delta, MAX_STEP);
+    const p = probe.current;
+    if (!p.done && time.current > 0.3) {
+      p.frames++;
+      p.total += delta;
+      // Averaging under ~40 fps over the opening means this device can't afford full quality.
+      if (p.frames === 45) {
+        p.done = true;
+        if (p.total / p.frames > 1 / 40) onSlow();
+      }
+    }
     time.current += dt;
     const rect = gl.domElement.getBoundingClientRect();
     const vp = viewport.getCurrentViewport(camera, [0, 0, 0]);
@@ -361,17 +407,24 @@ function Clump({
     }
 
     for (const b of bodies) b.last.copy(b.p);
-    simulate(bodies, time.current, dt, held.current ? null : push, held.current, hovered.current);
+    simulate(bodies, time.current, dt, held.current ? null : push, held.current, hovered.current, float);
 
-    // Rendering is on demand: keep frames coming only while something visibly moves, so a resting
-    // clump costs the GPU nothing (the pointer moving wakes it up again). Tiles pressed together
-    // keep a little velocity against each other, so this looks at how far they actually moved.
+    // Rendering is on demand: full frame rate while something really moves (fly-in, a push, a
+    // throw), 30 fps for the gentle sway, nothing at all when the sway is off and the clump rests.
+    // The check looks at how far tiles actually moved, since tiles pressed together keep a little
+    // velocity against each other.
     const arrived = bodies.reduce((t, b) => Math.max(t, b.delay), 0) + 1;
     const moving =
       time.current < arrived ||
       held.current !== null ||
-      bodies.some((b) => b.p.distanceToSquared(b.last) > (0.0008 * dt * 60) ** 2 || b.spin.lengthSq() > 4e-3);
+      bodies.some((b) => b.p.distanceToSquared(b.last) > (0.004 * dt * 60) ** 2 || b.spin.lengthSq() > 4e-3);
     if (moving) invalidate();
+    else if (float && !swayTimer.current) {
+      swayTimer.current = window.setTimeout(() => {
+        swayTimer.current = 0;
+        invalidate();
+      }, 1000 / 30);
+    }
     // A little pop as each one arrives.
     const scaleOf = (b: Body) => (time.current >= b.delay ? Math.min(1, 0.4 + (time.current - b.delay) * 1.6) : 0.0001);
     bodies.forEach((b, i) => {
@@ -426,12 +479,12 @@ function Clump({
 
       {/* All the ice in one instanced mesh: a single glass pass however many blocks there are. */}
       <instancedMesh ref={ice} args={[iceGeometry, undefined, iceBodies.length]} frustumCulled={false}>
-        {compact ? (
+        {!glass ? (
           <meshPhysicalMaterial color="#bfe6fb" roughness={0.06} clearcoat={1} transparent opacity={0.6} envMapIntensity={2.2} depthWrite={false} />
         ) : (
           <MeshTransmissionMaterial
-            samples={2}
-            resolution={256}
+            samples={4}
+            resolution={512}
             thickness={1.2}
             roughness={0.02}
             ior={1.31}
@@ -458,6 +511,8 @@ export default function AppMagnet() {
   const textures = useIconTextures(hidden);
   const [active, setActive] = useState(true);
   const [env, setEnv] = useState<{ compact: boolean; still: boolean } | null>(null);
+  // Full sharpness and real glass by default; weak or struggling devices get the light mode.
+  const [light, setLight] = useState(false);
 
   useEffect(() => {
     // Weak devices skip the glass refraction pass, the heaviest part of a frame.
@@ -466,8 +521,9 @@ export default function AppMagnet() {
     // Starting the scene blocks the main thread for a moment: do it in the first idle moment
     // after the page hydrates, so the tiles arrive right away without fighting the first paint.
     const start = () => {
+      setLight(weak);
       setEnv({
-        compact: weak || window.matchMedia("(max-width: 1023px)").matches,
+        compact: window.matchMedia("(max-width: 1023px)").matches,
         still: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       });
       setAnchor(document.querySelector<HTMLElement>("[data-magnet-anchor]"));
@@ -501,7 +557,7 @@ export default function AppMagnet() {
           style={{ pointerEvents: "none" }}
           camera={{ position: [0, 0, 11], fov: 32 }}
           resize={{ scroll: false }}
-          dpr={1}
+          dpr={light ? 1 : [1, 2]}
           frameloop={active ? "demand" : "never"}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         >
@@ -513,7 +569,15 @@ export default function AppMagnet() {
             <Lightformer form="rect" intensity={2.5} color="#7c5cff" position={[5, -1, 2]} rotation-y={-Math.PI / 2} scale={[6, 4, 1]} />
             <Lightformer form="ring" intensity={2} color="#38bdf8" position={[0, -3, -4]} scale={4} />
           </Environment>
-          <Clump compact={env.compact} still={env.still} textures={textures} anchor={anchor} />
+          <Clump
+            compact={env.compact}
+            glass={!env.compact && !light}
+            still={env.still}
+            textures={textures}
+            anchor={anchor}
+            onSlow={() => setLight(true)}
+            float={!light && !env.still}
+          />
         </Canvas>
       )}
     </div>
