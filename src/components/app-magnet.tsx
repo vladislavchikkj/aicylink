@@ -28,6 +28,8 @@ type Body = {
   delay: number;
   from: THREE.Vector3;
   p: THREE.Vector3;
+  /** Position before the latest step, to tell whether it still visibly moves. */
+  last: THREE.Vector3;
   v: THREE.Vector3;
   rot: THREE.Euler;
   spin: THREE.Vector3;
@@ -62,6 +64,7 @@ function makeBodies(count: number): Body[] {
       delay: 0.25 + n * 0.14,
       from,
       p: from.clone(),
+      last: from.clone(),
       v: new THREE.Vector3(),
       rot: new THREE.Euler((rand() - 0.5) * 2, (rand() - 0.5) * 2, (rand() - 0.5) * 2),
       spin: new THREE.Vector3((rand() - 0.5) * 1.2, (rand() - 0.5) * 1.2, (rand() - 0.5) * 0.8),
@@ -70,16 +73,20 @@ function makeBodies(count: number): Body[] {
 }
 
 /** Advances the clump: pull to the center, keep bodies apart, let the pointer push them. */
-function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vector3 | null, held: Body | null = null) {
+function simulate(
+  bodies: Body[],
+  time: number,
+  dt: number,
+  pointer: THREE.Vector3 | null,
+  held: Body | null = null,
+  /** The tile under the mouse stays put so it can be grabbed; only its neighbours lean away. */
+  hovered: Body | null = null,
+) {
   const d = new THREE.Vector3();
   for (const b of bodies) {
     if (time < b.delay || b === held) continue;
     b.v.addScaledVector(b.p, -dt * (time < b.delay + 1.5 ? 2.4 : 1.6));
     b.v.z += -b.p.z * dt;
-    // A slow drift so the resting clump breathes.
-    const phase = b.delay * 7;
-    b.v.x += Math.sin(time * 0.5 + phase) * dt * 0.12;
-    b.v.y += Math.cos(time * 0.4 + phase) * dt * 0.12;
   }
   for (let i = 0; i < bodies.length; i++) {
     const a = bodies[i];
@@ -101,11 +108,14 @@ function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vecto
       if (along < 0) {
         a.v.addScaledVector(d, along * 0.3);
         b.v.addScaledVector(d, -along * 0.3);
-        a.spin.z += along * 0.15;
-        b.spin.x -= along * 0.15;
+        // Only a real knock sets tiles spinning; resting contact must not, or they never settle.
+        if (along < -0.4) {
+          a.spin.z += along * 0.15;
+          b.spin.x -= along * 0.15;
+        }
       }
     }
-    if (pointer && !held) {
+    if (pointer && !held && a !== hovered) {
       d.subVectors(a.p, pointer);
       d.z *= 0.4;
       const dist = d.length() || 0.0001;
@@ -114,8 +124,6 @@ function simulate(bodies: Body[], time: number, dt: number, pointer: THREE.Vecto
       if (dist < min) {
         d.divideScalar(dist);
         a.v.addScaledVector(d, (min - dist) * dt * 14);
-        a.spin.y += d.x * dt * 1.5;
-        a.spin.x -= d.y * dt * 1.5;
       }
     }
   }
@@ -250,10 +258,13 @@ function Clump({
   const throwVelocity = useMemo(() => new THREE.Vector3(), []);
   const lastLocal = useMemo(() => new THREE.Vector3(), []);
   const tile = useTileGeometry();
-  const { gl } = useThree();
+  const { gl, invalidate } = useThree();
 
   useEffect(() => {
-    const onMove = (e: PointerEvent) => (client.current = { x: e.clientX, y: e.clientY });
+    const onMove = (e: PointerEvent) => {
+      client.current = { x: e.clientX, y: e.clientY };
+      invalidate();
+    };
     const onLeave = () => (client.current = null);
     const onDown = (e: PointerEvent) => {
       if (e.pointerType !== "mouse" || e.button !== 0 || !hovered.current) return;
@@ -286,7 +297,7 @@ function Clump({
       document.removeEventListener("pointerleave", onLeave);
       document.body.style.cursor = "";
     };
-  }, [lastLocal, throwVelocity]);
+  }, [invalidate, lastLocal, throwVelocity]);
 
   useFrame(({ viewport, camera }, delta) => {
     const dt = Math.min(delta, MAX_STEP);
@@ -349,7 +360,18 @@ function Clump({
       grabbed.rot.z += (-throwVelocity.x * 0.04 - wrap(grabbed.rot.z)) * dt * 6;
     }
 
-    simulate(bodies, time.current, dt, held.current ? null : push, held.current);
+    for (const b of bodies) b.last.copy(b.p);
+    simulate(bodies, time.current, dt, held.current ? null : push, held.current, hovered.current);
+
+    // Rendering is on demand: keep frames coming only while something visibly moves, so a resting
+    // clump costs the GPU nothing (the pointer moving wakes it up again). Tiles pressed together
+    // keep a little velocity against each other, so this looks at how far they actually moved.
+    const arrived = bodies.reduce((t, b) => Math.max(t, b.delay), 0) + 1;
+    const moving =
+      time.current < arrived ||
+      held.current !== null ||
+      bodies.some((b) => b.p.distanceToSquared(b.last) > (0.0008 * dt * 60) ** 2 || b.spin.lengthSq() > 4e-3);
+    if (moving) invalidate();
     // A little pop as each one arrives.
     const scaleOf = (b: Body) => (time.current >= b.delay ? Math.min(1, 0.4 + (time.current - b.delay) * 1.6) : 0.0001);
     bodies.forEach((b, i) => {
@@ -408,8 +430,8 @@ function Clump({
           <meshPhysicalMaterial color="#bfe6fb" roughness={0.06} clearcoat={1} transparent opacity={0.6} envMapIntensity={2.2} depthWrite={false} />
         ) : (
           <MeshTransmissionMaterial
-            samples={4}
-            resolution={512}
+            samples={2}
+            resolution={256}
             thickness={1.2}
             roughness={0.02}
             ior={1.31}
@@ -438,15 +460,31 @@ export default function AppMagnet() {
   const [env, setEnv] = useState<{ compact: boolean; still: boolean } | null>(null);
 
   useEffect(() => {
-    setEnv({
-      compact: window.matchMedia("(max-width: 1023px)").matches,
-      still: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    });
-    setAnchor(document.querySelector<HTMLElement>("[data-magnet-anchor]"));
+    // Weak devices skip the glass refraction pass, the heaviest part of a frame.
+    const nav = navigator as Navigator & { deviceMemory?: number };
+    const weak = (nav.hardwareConcurrency ?? 8) <= 4 || (nav.deviceMemory ?? 8) <= 4;
+    // Starting the scene blocks the main thread for a moment, so wait until the hero's text
+    // has animated in and the browser is idle; the page never stutters while it appears.
+    const start = () => {
+      setEnv({
+        compact: weak || window.matchMedia("(max-width: 1023px)").matches,
+        still: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      });
+      setAnchor(document.querySelector<HTMLElement>("[data-magnet-anchor]"));
+    };
+    let idle = 0;
+    const timer = window.setTimeout(() => {
+      // Safari has no requestIdleCallback.
+      idle = typeof (window as Partial<Window>).requestIdleCallback === "function" ? window.requestIdleCallback(start, { timeout: 1000 }) : window.setTimeout(start, 0);
+    }, 1800);
     // Render only while the hero is on screen.
     const observer = new IntersectionObserver(([entry]) => setActive(entry.isIntersecting));
     if (box.current) observer.observe(box.current);
-    return () => observer.disconnect();
+    return () => {
+      window.clearTimeout(timer);
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -463,8 +501,8 @@ export default function AppMagnet() {
           style={{ pointerEvents: "none" }}
           camera={{ position: [0, 0, 11], fov: 32 }}
           resize={{ scroll: false }}
-          dpr={[1, env.compact ? 1.5 : 1.75]}
-          frameloop={active ? "always" : "never"}
+          dpr={1}
+          frameloop={active ? "demand" : "never"}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         >
           <ambientLight intensity={0.9} />
