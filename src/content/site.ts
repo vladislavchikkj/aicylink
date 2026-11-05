@@ -53,11 +53,11 @@ export type Category = {
 export const categories: Category[] = [
   {
     id: "create",
-    name: "Create",
-    tagline: "AI tools that turn ideas into something real.",
+    name: "Talk & create",
+    tagline: "AI you can talk to, and tools that get things done.",
     color: "var(--ice-1)",
     products: [
-      { id: "lummie", name: "Lummie", description: "An AI companion to chat, talk and create with.", status: "flagship", href: "https://lummie.app" },
+      { id: "lummie", name: "Lummie", description: "Call an AI character and talk about anything.", status: "flagship", href: "https://lummie.app" },
       { id: "cv", name: "Tailra", description: "Tailor your resume to any job post in seconds.", status: "early" },
     ],
   },
@@ -144,6 +144,7 @@ export const testimonials: { quote: string; name: string; role: string }[] = [];
 export const timeline = [
   { year: "2025", title: "AicyLink is founded", text: "A product studio set up to build a portfolio of simple, AI-powered apps." },
   { year: "Jan 2026", title: "Lummie goes live", text: "Our first product launches: an AI companion for chatting and creating." },
+  { year: "Nov 2026", title: "Lummie becomes a voice app", text: "Lummie relaunches around real voice calls with four AI characters." },
   { year: "Next", title: "Building the portfolio", text: "Seven new apps in development across creativity, wellbeing and self-discovery." },
 ];
 
@@ -180,6 +181,7 @@ export const hiringSteps = [
 ];
 
 export const news = [
+  { date: "2026-11", source: "Product update", title: "Lummie relaunches as a voice app with four AI characters" },
   { date: "2026-01", source: "Product launch", title: "AicyLink launches Lummie, its first AI product" },
 ];
 

@@ -1,13 +1,9 @@
 "use client";
 
-import { motion } from "motion/react";
-import { Orbitron } from "next/font/google";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import type { AppId } from "@/content/site";
-import { LummieMark } from "./app-icon";
 import { EASE_OUT } from "./motion/reveal";
-
-const orbitron = Orbitron({ subsets: ["latin"], weight: ["500"] });
 
 // Fixed star positions so server and client render the same sky.
 const stars = Array.from({ length: 70 }, (_, i) => ({
@@ -17,36 +13,28 @@ const stars = Array.from({ length: 70 }, (_, i) => ({
   delay: (i % 10) * 0.4,
 }));
 
-const prompts = ["Plan a cozy weekend in Lisbon", "Draw a fox astronaut in watercolor", "Build a landing page for my café"];
+// The real Lummie characters, with their portraits, colors and first lines.
+const characters = [
+  { id: "mia", name: "Mia", color: "#8b5cf6", line: "Hey! How was your day? Tell me everything." },
+  { id: "leo", name: "Leo", color: "#0ea5e9", line: "Hey, got a good story for me today?" },
+  { id: "ava", name: "Ava", color: "#f97316", line: "Hi! Let's skip the small talk. What's up?" },
+  { id: "sam", name: "Sam", color: "#22c55e", line: "Hello. Take your time, I'm listening." },
+];
 
-function Typewriter() {
+const BARS = [0.45, 0.8, 0.6, 1, 0.7, 0.9, 0.5, 0.75, 0.55, 0.85, 0.6, 0.4];
+
+/** Live call screen from lummie.app: the characters take turns on the line. */
+export function LummieWindow() {
+  const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
-  const [text, setText] = useState("");
+  const c = characters[index];
 
   useEffect(() => {
-    const full = prompts[index];
-    if (text.length < full.length) {
-      const t = setTimeout(() => setText(full.slice(0, text.length + 1)), 45);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => {
-      setText("");
-      setIndex((index + 1) % prompts.length);
-    }, 2200);
-    return () => clearTimeout(t);
-  }, [text, index]);
+    if (reduce) return;
+    const t = setInterval(() => setIndex((i) => (i + 1) % characters.length), 4500);
+    return () => clearInterval(t);
+  }, [reduce]);
 
-  return (
-    <span className="truncate text-white/85">
-      {text}
-      <span className="ml-px inline-block h-4 w-px translate-y-0.5 animate-pulse bg-white/80" />
-    </span>
-  );
-}
-
-const chips = ["DeepSearch", "Imagine", "App", "Hints"];
-
-export function LummieWindow() {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-black/80 bg-[#0b0b0d] shadow-[0_50px_120px_-40px_rgba(10,10,10,0.6)]">
       <div className="flex items-center gap-3 border-b border-white/10 bg-[#131316] px-4 py-3">
@@ -55,70 +43,104 @@ export function LummieWindow() {
           <span className="size-3 rounded-full bg-[#febc2e]" />
           <span className="size-3 rounded-full bg-[#28c840]" />
         </div>
-        <span className="mx-auto rounded-md bg-white/5 px-3 py-1 font-mono text-xs text-white/50">lummie.app</span>
+        <span className="mx-auto rounded-md bg-white/5 px-3 py-1 font-mono text-xs text-white/50">lummie.app/call</span>
         <span className="w-[54px]" aria-hidden />
       </div>
 
-      <div className="relative flex min-h-[420px] sm:min-h-[460px]">
+      <div className="relative flex min-h-[420px] flex-col items-center justify-center overflow-hidden px-4 py-10 text-center sm:min-h-[460px]">
+        {/* The character's light behind the call. */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          animate={{ background: `radial-gradient(60% 55% at 50% 38%, ${c.color}55, transparent 70%)` }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+        />
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           {stars.map((s, i) => (
             <span
               key={i}
               className="absolute animate-pulse rounded-full bg-white"
-              style={{ left: `${s.left}%`, top: `${s.top}%`, width: s.size, height: s.size, opacity: 0.5, animationDelay: `${s.delay}s`, animationDuration: "3s" }}
+              style={{ left: `${s.left}%`, top: `${s.top}%`, width: s.size, height: s.size, opacity: 0.35, animationDelay: `${s.delay}s`, animationDuration: "3s" }}
             />
           ))}
         </div>
 
-        <aside className="relative hidden w-12 shrink-0 flex-col items-center gap-5 border-r border-white/10 py-4 text-white/60 sm:flex" aria-hidden>
-          <LummieMark className="size-5 text-white" />
-          {["M11 19a8 8 0 1 1 5.3-2L21 21", "M4 5h16v11H8l-4 4Z", "M4 4h7v7H4zM13 6h7M13 10h7M4 15h16M4 19h16", "M4 5h16v14H4zM8 15l3-3 3 3 2-2 4 4"].map((d) => (
-            <svg key={d} viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d={d} />
-            </svg>
-          ))}
-        </aside>
+        <div className="relative size-32 sm:size-36">
+          <motion.span
+            aria-hidden
+            className="absolute -inset-4 rounded-full blur-2xl"
+            animate={{ backgroundColor: c.color, opacity: reduce ? 0.5 : [0.4, 0.75, 0.4] }}
+            transition={{ backgroundColor: { duration: 0.6 }, opacity: { duration: 1.6, repeat: Infinity, ease: "easeInOut" } }}
+          />
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.img
+              key={c.id}
+              src={`/products/lummie/${c.id}.jpg`}
+              alt={`${c.name}, an AI character in Lummie`}
+              width={144}
+              height={144}
+              className="relative size-full rounded-full object-cover object-[50%_20%] ring-1 ring-white/15"
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.04 }}
+              transition={{ duration: 0.6, ease: EASE_OUT }}
+            />
+          </AnimatePresence>
+        </div>
 
-        <div className="relative flex flex-1 flex-col items-center justify-center px-4 py-12 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, ease: EASE_OUT }}
-          >
-            <LummieMark className="mx-auto size-12 text-[#d9d9d9]" />
-            <p className={`${orbitron.className} mt-4 text-4xl text-white sm:text-5xl`}>Lummie</p>
-            <p className="mt-3 text-sm text-white/70">Your all-in-one AI companion for chatting, creating art, and building.</p>
-          </motion.div>
+        <p className="relative mt-6 text-lg font-semibold text-white">{c.name}</p>
+        <p className="relative mt-0.5 text-xs text-white/55">{c.name} is speaking</p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.2, ease: EASE_OUT }}
-            className="mt-8 flex w-full max-w-xl items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] py-2 pl-5 pr-2 text-left text-sm"
-          >
-            <Typewriter />
-            <span className="ml-auto hidden shrink-0 text-xs text-white/50 sm:inline">⚡ Fast</span>
-            <span className="flex size-9 shrink-0 items-center justify-center gap-0.5 rounded-full bg-white" aria-hidden>
-              {[0.5, 1, 0.7, 0.9, 0.5].map((h, i) => (
-                <motion.span
-                  key={i}
-                  className="w-0.5 rounded-full bg-black"
-                  animate={{ height: [h * 6, h * 14, h * 6] }}
-                  transition={{ duration: 1, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
-                />
-              ))}
-            </span>
-          </motion.div>
+        {/* Lines are stacked in one grid cell and crossfade with the portrait. */}
+        <div className="relative mt-5 grid min-h-14 w-full max-w-sm">
+          <AnimatePresence initial={false}>
+            <motion.p
+              key={c.id}
+              className="col-start-1 row-start-1 text-balance text-lg font-medium leading-snug text-white sm:text-xl"
+              initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+              transition={{ duration: 0.5, ease: EASE_OUT }}
+            >
+              {c.line}
+            </motion.p>
+          </AnimatePresence>
+        </div>
 
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {chips.map((c) => (
-              <span key={c} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/75">
-                {c}
-              </span>
+        <div className="relative mt-7 flex items-center gap-3" aria-hidden>
+          <span className="flex h-12 w-40 items-center justify-center gap-[4px] rounded-full border border-white/15 bg-white/10 backdrop-blur">
+            {BARS.map((h, i) => (
+              <motion.span
+                key={i}
+                className="w-[3px] rounded-full"
+                animate={{ height: reduce ? h * 10 : [h * 6, h * 22, h * 8], backgroundColor: c.color }}
+                transition={{
+                  height: { duration: 0.9 + (i % 3) * 0.15, repeat: Infinity, delay: i * 0.07, ease: "easeInOut" },
+                  backgroundColor: { duration: 0.6 },
+                }}
+              />
             ))}
-          </div>
+          </span>
+          <span className="grid size-12 place-items-center rounded-full bg-red-500 shadow-[0_10px_30px_-8px_rgba(239,68,68,0.7)]">
+            <span className="size-3.5 rounded-[3px] bg-white" />
+          </span>
+        </div>
+
+        <div className="relative mt-8 flex gap-2.5">
+          {characters.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setIndex(i)}
+              aria-label={`Show ${p.name}`}
+              aria-pressed={i === index}
+              className={`size-9 overflow-hidden rounded-full ring-2 ring-offset-2 ring-offset-[#0b0b0d] transition-all duration-300 hover:opacity-100 ${i === index ? "opacity-100" : "opacity-45 ring-transparent"}`}
+              style={i === index ? { ["--tw-ring-color" as string]: p.color } : undefined}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/products/lummie/${p.id}.jpg`} alt="" className="size-full object-cover object-[50%_20%]" />
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -227,7 +249,7 @@ function StarsScreen() {
           {signs.map((s, i) => {
             const a = (i / 12) * Math.PI * 2;
             return (
-              <text key={s} x={60 + Math.cos(a) * 48} y={60 + Math.sin(a) * 48 + 3} textAnchor="middle" fontSize="8" fill="#c4b5fd">
+              <text key={s} x={(60 + Math.cos(a) * 48).toFixed(2)} y={(60 + Math.sin(a) * 48 + 3).toFixed(2)} textAnchor="middle" fontSize="8" fill="#c4b5fd">
                 {`${s}\uFE0E`}
               </text>
             );
